@@ -26,19 +26,31 @@
             --heading-color: #1a202c;
             --accent-color: #4299e1;
             --accent-hover: #2b6cb0;
-            --success-color: #48bb78;
-            --warning-color: #ed8936;
-            --error-color: #f56565;
+            --success-color: #38a169;
+            --warning-color: #dd6b20;
+            --error-color: #e53e3e;
             --shadow-color: rgba(0, 0, 0, 0.05);
         }
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
+        
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            html { scroll-behavior: auto; }
+        }
+        
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             line-height: 1.7;
             font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         .container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
         
@@ -65,9 +77,52 @@
         .input-panel { position: sticky; top: 2rem; }
         .output-panel { display: flex; flex-direction: column; gap: 1.5rem; }
         
-        .coefficients-list dt { font-weight: 500; margin-bottom: 0.5rem; }
-        .coefficients-list dd { margin: 0 0 1.5rem 0; }
-        .slider { width: 100%; cursor: pointer; }
+        .coefficient-control { margin-bottom: 1.5rem; }
+        .coefficient-control label { 
+            display: block; 
+            font-weight: 500; 
+            margin-bottom: 0.5rem; 
+            color: var(--heading-color);
+        }
+        .coefficient-value { 
+            font-weight: 600; 
+            color: var(--accent-color); 
+            margin-left: 0.25rem; 
+        }
+        .slider { 
+            width: 100%; 
+            cursor: pointer; 
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--border-color);
+            outline: none;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .slider:hover { background: var(--accent-color); opacity: 0.7; }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-color);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid var(--surface-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--accent-color);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid var(--surface-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .slider:active::-webkit-slider-thumb { transform: scale(1.2); }
+        .slider:active::-moz-range-thumb { transform: scale(1.2); }
         
         #currentEquation { font-family: 'Fira Code', monospace; background-color: var(--bg-color); padding: 1rem; border-radius: 8px; text-align: center; font-size: 1.1rem; border: 1px solid var(--border-color); min-height: 50px; }
         .math-display { margin: 1rem 0; text-align: center; overflow-x: auto; }
@@ -76,16 +131,18 @@
         .graph-card { padding: 1.5rem; }
         .dynamic-svg { width: 100%; height: auto; border-radius: 8px; background-color: #fafbfd; border: 1px solid var(--border-color); }
         
-        .svg-axis { stroke: var(--heading-color); stroke-width: 1; }
-        .svg-axis-name-label { font-size: 13px; fill: var(--heading-color); font-family: 'Inter', sans-serif; font-weight: 500; }
-        .svg-axis-symmetry { stroke: var(--success-color); stroke-width: 1.5; stroke-dasharray: 4, 4; }
-        .svg-axis-label { font-size: 10px; fill: var(--success-color); font-family: 'Fira Code', monospace; }
-        .svg-curve { stroke: var(--accent-color); stroke-width: 2.5; fill: none; }
-        .svg-point { stroke: var(--surface-color); stroke-width: 1.5; }
+        .svg-axis { stroke: var(--heading-color); stroke-width: 1.5; }
+        .svg-grid-line { stroke: var(--border-color); stroke-width: 0.5; opacity: 0.5; }
+        .svg-axis-name-label { font-size: 16px; fill: var(--heading-color); font-family: 'Inter', sans-serif; font-weight: 600; }
+        .svg-axis-tick-label { font-size: 11px; fill: var(--text-color); font-family: 'Fira Code', monospace; }
+        .svg-axis-symmetry { stroke: var(--success-color); stroke-width: 2; stroke-dasharray: 5, 5; }
+        .svg-axis-label { font-size: 12px; fill: var(--success-color); font-family: 'Fira Code', monospace; font-weight: 500; }
+        .svg-curve { stroke: var(--accent-color); stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+        .svg-point { stroke: var(--surface-color); stroke-width: 2; }
         .svg-root { fill: var(--error-color); }
         .svg-vertex { fill: var(--success-color); }
         .svg-y-intercept { fill: var(--accent-color); }
-        .svg-label { font-size: 11px; font-weight: 500; font-family: 'Fira Code', monospace; }
+        .svg-label { font-size: 13px; font-weight: 600; font-family: 'Fira Code', monospace; }
         .svg-root-label, .svg-complex-label { fill: var(--error-color); }
         .svg-vertex-label { fill: var(--success-color); }
         .svg-y-intercept-label { fill: var(--accent-color); }
@@ -96,8 +153,40 @@
         .result-chip.warning { border-left-color: var(--warning-color); }
         .result-chip.error { border-left-color: var(--error-color); }
         
-        .btn-amplify { display: block; width: 100%; margin-top: 1rem; padding: 0.6rem; background-color: var(--accent-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; transition: background-color 0.2s; }
-        .btn-amplify:hover { background-color: var(--accent-hover); }
+        .btn-amplify { 
+            display: block; 
+            width: 100%; 
+            margin-top: 1rem; 
+            padding: 0.75rem 1rem; 
+            background-color: var(--accent-color); 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(66, 153, 225, 0.3);
+        }
+        .btn-amplify:hover { 
+            background-color: var(--accent-hover); 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(66, 153, 225, 0.4);
+        }
+        .btn-amplify:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(66, 153, 225, 0.3);
+        }
+        .btn-amplify:focus-visible {
+            outline: 3px solid var(--accent-color);
+            outline-offset: 2px;
+        }
+        
+        /* Focus visible para accesibilidad */
+        *:focus-visible {
+            outline: 2px solid var(--accent-color);
+            outline-offset: 2px;
+        }
 
         .accordion-item { border-bottom: 1px solid var(--border-color); }
         .accordion-item:last-child { border-bottom: none; }
@@ -107,18 +196,60 @@
         .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; }
         .accordion-content .content-inner { padding-top: 0.5rem; padding-bottom: 1.5rem; }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.3s ease; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; align-items: center; justify-content: center; z-index: 9999; animation: fadeIn 0.3s ease; isolation: isolate; }
         .modal-overlay.active { display: flex; }
         .modal-content { background: var(--surface-color); padding: 2rem; border-radius: 12px; width: 90%; max-width: 850px; max-height: 90vh; box-shadow: 0 10px 30px rgba(0,0,0,0.2); position: relative; display: flex; flex-direction: column; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
         .modal-close-btn { background: none; border: none; font-size: 2rem; cursor: pointer; color: var(--text-color); }
         #modalGraphContainer { flex-grow: 1; min-height: 0; }
         
-        .site-footer { text-align: center; padding: 2rem 1.5rem; margin-top: 2rem; font-size: 0.9em; color: var(--text-color); border-top: 1px solid var(--border-color); }
+        .site-footer { text-align: center; padding: 2rem 1.5rem; margin-top: 2rem; font-size: 0.9em; color: var(--text-color); border-top: 1px solid var(--border-color); position: relative; z-index: 1; }
         .site-footer a { color: var(--accent-color); text-decoration: none; font-weight: 500; }
 
-        @media (max-width: 992px) { .calculator-layout { grid-template-columns: 1fr; } .input-panel { position: static; } }
-        @media (max-width: 768px) { .container { padding: 0 1rem; } .site-header h1 { font-size: 2.2rem; } .tabs { flex-wrap: wrap; gap: 0.5rem; } .tab-button { flex-basis: calc(50% - 0.25rem); } .card { padding: 1.5rem; } .modal-content { padding: 1rem; width: 95%; } }
+        @media (max-width: 992px) { 
+            .calculator-layout { grid-template-columns: 1fr; } 
+            .input-panel { position: static; } 
+        }
+        @media (max-width: 768px) { 
+            .container { padding: 0 1rem; } 
+            .site-header h1 { font-size: 2rem; } 
+            .site-header p { font-size: 1rem; }
+            .tabs { flex-wrap: wrap; gap: 0.5rem; } 
+            .tab-button { flex-basis: calc(50% - 0.25rem); font-size: 0.95rem; padding: 0.75rem 1rem; } 
+            .card { padding: 1.5rem; } 
+            .modal-content { padding: 1rem; width: 95%; max-height: 85vh; } 
+            .svg-axis-name-label { font-size: 14px; }
+            .svg-label { font-size: 11px; }
+            .svg-axis-tick-label { font-size: 9px; }
+            .key-results { grid-template-columns: 1fr; }
+            .result-chip { font-size: 0.9rem; }
+        }
+        @media (max-width: 480px) {
+            .site-header h1 { font-size: 1.6rem; }
+            .card { padding: 1rem; }
+            h3 { font-size: 1.2rem; }
+            .svg-point { r: 4; }
+            .svg-curve { stroke-width: 2.5; }
+        }
+        @media (max-width: 375px) {
+            .container { padding: 0 0.75rem; }
+            .site-header h1 { font-size: 1.4rem; }
+            .site-header p { font-size: 0.9rem; }
+            .card { padding: 0.875rem; }
+            .tab-button { font-size: 0.85rem; padding: 0.625rem 0.75rem; }
+            .result-chip { font-size: 0.85rem; padding: 0.625rem 0.75rem; }
+            .coefficient-control label { font-size: 0.95rem; }
+            h3 { font-size: 1.1rem; }
+        }
+        @media (max-width: 320px) {
+            .container { padding: 0 0.5rem; }
+            .card { padding: 0.75rem; }
+            .site-header { padding: 1.5rem 0; }
+            .site-header h1 { font-size: 1.3rem; }
+            .info-box { padding: 0.75rem; font-size: 0.9em; }
+            .coefficient-control { margin-bottom: 1.25rem; }
+            .btn-amplify { padding: 0.625rem 0.875rem; font-size: 0.95rem; }
+        }
     </style>
 </head>
 <body>
@@ -147,16 +278,22 @@
                     <h3>Coeficientes de la Función</h3>
                     <div id="error-message-a" class="result-chip error" style="display:none; text-align:left; margin-bottom: 1rem;">El coeficiente 'a' no puede ser cero para una parábola.</div>
                     
-                    <dl class="coefficients-list">
-                        <dt><label for="sliderA">Coeficiente a: <span id="valueA">1.0</span></label></dt>
-                        <dd><input type="range" id="sliderA" class="slider" min="-10" max="10" step="0.1" value="1"></dd>
+                    <div class="coefficients-container">
+                        <div class="coefficient-control">
+                            <label for="sliderA">Coeficiente a: <span class="coefficient-value" id="valueA">1.0</span></label>
+                            <input type="range" id="sliderA" class="slider" min="-10" max="10" step="0.1" value="1" aria-label="Control deslizante para el coeficiente a">
+                        </div>
                         
-                        <dt><label for="sliderB">Coeficiente b: <span id="valueB">-2.0</span></label></dt>
-                        <dd><input type="range" id="sliderB" class="slider" min="-10" max="10" step="0.1" value="-2"></dd>
+                        <div class="coefficient-control">
+                            <label for="sliderB">Coeficiente b: <span class="coefficient-value" id="valueB">-2.0</span></label>
+                            <input type="range" id="sliderB" class="slider" min="-10" max="10" step="0.1" value="-2" aria-label="Control deslizante para el coeficiente b">
+                        </div>
 
-                        <dt><label for="sliderC">Coeficiente c: <span id="valueC">-3.0</span></label></dt>
-                        <dd><input type="range" id="sliderC" class="slider" min="-10" max="10" step="0.1" value="-3"></dd>
-                    </dl>
+                        <div class="coefficient-control">
+                            <label for="sliderC">Coeficiente c: <span class="coefficient-value" id="valueC">-3.0</span></label>
+                            <input type="range" id="sliderC" class="slider" min="-10" max="10" step="0.1" value="-3" aria-label="Control deslizante para el coeficiente c">
+                        </div>
+                    </div>
 
                     <h3>Función Actual:</h3>
                     <div id="currentEquation"></div>
@@ -186,11 +323,11 @@
         <section id="examples" class="tab-content"></section>
     </main>
 
-    <div id="graphModal" class="modal-overlay">
-        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div id="graphModal" class="modal-overlay" role="dialog" aria-modal="true">
+        <div class="modal-content" aria-labelledby="modal-title">
             <div class="modal-header">
                 <h2 id="modal-title">Gráfico Detallado</h2>
-                <button class="modal-close-btn" aria-label="Cerrar">&times;</button>
+                <button class="modal-close-btn" aria-label="Cerrar modal" tabindex="0">&times;</button>
             </div>
             <div id="modalGraphContainer"></div>
         </div>
@@ -205,7 +342,9 @@
     <script>
         const ParabolaExplorer = (() => {
             const state = { a: 1, b: -2, c: -3, solution: {} };
-            const EPSILON = 1e-9;
+            const EPSILON = 1e-10;
+            let debounceTimer = null;
+            let lastFocusedElement = null; // Para focus trap
 
             const DOM = {
                 tabsContainer: document.querySelector('.tabs'),
@@ -229,141 +368,333 @@
             };
 
             function solveQuadratic(a, b, c) {
-                const discriminant = b*b - 4*a*c;
-                const vertex = { x: -b / (2*a), y: a*(-b/(2*a))**2 + b*(-b/(2*a)) + c };
-                const results = { a, b, c, discriminant, vertex, y_intercept: c, roots: [], complex_roots: [] };
-                
-                if (discriminant > EPSILON) {
-                    const sqrt_d = Math.sqrt(discriminant);
-                    results.roots.push((-b - sqrt_d) / (2*a), (-b + sqrt_d) / (2*a));
-                } else if (Math.abs(discriminant) < EPSILON) {
-                    results.roots.push(-b / (2*a));
-                } else {
-                    const sqrt_d_abs = Math.sqrt(Math.abs(discriminant));
-                    results.complex_roots.push({ real: -b / (2*a), imag: sqrt_d_abs / (2*a) });
+                // Validación robusta de entrada
+                if (Math.abs(a) < EPSILON) {
+                    throw new Error('El coeficiente a no puede ser cero');
                 }
+                
+                // Cálculo preciso del discriminante
+                const discriminant = b * b - 4 * a * c;
+                
+                // Cálculo del vértice: V = (-b/2a, c - b²/4a)
+                // Fórmula optimizada: y_v = c - b²/(4a) = (4ac - b²)/(4a) = -Δ/(4a)
+                const vertex_x = -b / (2 * a);
+                const vertex_y = c - (b * b) / (4 * a);
+                const vertex = { x: vertex_x, y: vertex_y };
+                
+                const results = { 
+                    a, b, c, 
+                    discriminant, 
+                    vertex, 
+                    y_intercept: c, 
+                    roots: [], 
+                    complex_roots: [] 
+                };
+                
+                // Clasificación precisa según el discriminante
+                if (discriminant > EPSILON) {
+                    // Fórmula numericamente estable para evitar cancelación catastrófica
+                    const sqrt_d = Math.sqrt(discriminant);
+                    const denom = 2 * a;
+                    
+                    if (b >= 0) {
+                        const r1 = (-b - sqrt_d) / denom;
+                        const r2 = (2 * c) / (-b - sqrt_d);
+                        results.roots.push(Math.min(r1, r2), Math.max(r1, r2));
+                    } else {
+                        const r1 = (-b + sqrt_d) / denom;
+                        const r2 = (2 * c) / (-b + sqrt_d);
+                        results.roots.push(Math.min(r1, r2), Math.max(r1, r2));
+                    }
+                } else if (Math.abs(discriminant) <= EPSILON) {
+                    // Raíz doble
+                    results.roots.push(-b / (2 * a));
+                } else {
+                    // Raíces complejas conjugadas
+                    const real_part = -b / (2 * a);
+                    const imag_part = Math.sqrt(Math.abs(discriminant)) / (2 * a);
+                    results.complex_roots.push({ 
+                        real: real_part, 
+                        imag: imag_part 
+                    });
+                }
+                
                 return results;
             }
 
             function renderEquation() {
                 const { a, b, c } = state;
-                const format = (v, t, f) => {
+                
+                const format = (v, term, isFirst) => {
                     if (Math.abs(v) < EPSILON) return '';
-                    const s = f ? (v < 0 ? '-' : '') : (v < 0 ? ' - ' : ' + ');
-                    const av = Math.abs(v);
-                    const n = av.toFixed(1).replace(/\.0$/, '');
-                    return (Math.abs(av - 1) < EPSILON && t) ? `${s}${t}` : `${s}${n}${t}`;
+                    
+                    const sign = isFirst ? (v < 0 ? '-' : '') : (v < 0 ? ' - ' : ' + ');
+                    const absVal = Math.abs(v);
+                    const numStr = absVal.toFixed(1).replace(/\.0$/, '');
+                    
+                    // Para términos con variable, omitir el coeficiente si es 1
+                    if (term && Math.abs(absVal - 1) < EPSILON) {
+                        return `${sign}${term}`;
+                    }
+                    
+                    return `${sign}${numStr}${term}`;
                 };
-                DOM.currentEquation.innerHTML = `\\[f(x) = ${(format(a, 'x^2', true) + format(b, 'x', false) + format(c, '', false)).trim()}\\]`;
+                
+                const termA = format(a, 'x^2', true);
+                const termB = format(b, 'x', termA === '');
+                const termC = format(c, '', termA === '' && termB === '');
+                
+                let equation = (termA + termB + termC).trim();
+                
+                // Caso especial: si todos los términos son cero o solo queda c=0
+                if (equation === '' || equation === '+' || equation === '-') {
+                    equation = '0';
+                }
+                
+                DOM.currentEquation.innerHTML = `\\[f(x) = ${equation}\\]`;
             }
             
             function renderResults() {
                 const { discriminant, roots, complex_roots, vertex, y_intercept } = state.solution;
-                const discClass = discriminant > EPSILON ? 'success' : Math.abs(discriminant) < EPSILON ? 'warning' : 'error';
-                DOM.discriminantDisplay.className = `result-chip ${discClass}`;
-                DOM.discriminantDisplay.innerHTML = `<strong>Δ:</strong> \\(${discriminant.toFixed(2)}\\)`;
                 
-                let rootsHTML = '<strong>Raíces:</strong> ';
+                // Discriminante - SIN MathJax para mejor performance
+                const discClass = discriminant > EPSILON ? 'success' : Math.abs(discriminant) <= EPSILON ? 'warning' : 'error';
+                const discStatus = discriminant > EPSILON ? ' (2 raíces reales)' : 
+                                  Math.abs(discriminant) <= EPSILON ? ' (raíz doble)' : ' (raíces complejas)';
+                DOM.discriminantDisplay.className = `result-chip ${discClass}`;
+                DOM.discriminantDisplay.innerHTML = `<strong>Discriminante:</strong> Δ = ${discriminant.toFixed(3)}<br><small>${discStatus}</small>`;
+                
+                // Raíces - SIN MathJax para mejor performance
+                let rootsHTML = '<strong>Raíces:</strong><br>';
                 let rootsClass = 'result-chip ';
+                
                 if (roots.length === 2) {
-                    rootsHTML += `\\(x_1 = ${roots[0].toFixed(2)}, x_2 = ${roots[1].toFixed(2)}\\)`;
+                    rootsHTML += `x₁ = ${roots[0].toFixed(3)}<br>x₂ = ${roots[1].toFixed(3)}`;
                     rootsClass += 'success';
                 } else if (roots.length === 1) {
-                    rootsHTML += `\\(x_1 = x_2 = ${roots[0].toFixed(2)}\\)`;
+                    rootsHTML += `x₁,₂ = ${roots[0].toFixed(3)}`;
                     rootsClass += 'warning';
-                } else {
-                    rootsHTML += `\\(${complex_roots[0].real.toFixed(2)} \\pm ${Math.abs(complex_roots[0].imag).toFixed(2)}i\\)`;
+                } else if (complex_roots.length > 0) {
+                    const { real, imag } = complex_roots[0];
+                    // Mostrar ambas raíces complejas conjugadas explícitamente
+                    rootsHTML += `x₁ = ${real.toFixed(3)} + ${Math.abs(imag).toFixed(3)}i<br>`;
+                    rootsHTML += `x₂ = ${real.toFixed(3)} - ${Math.abs(imag).toFixed(3)}i`;
                     rootsClass += 'error';
+                } else {
+                    // Caso fallback (no debería ocurrir)
+                    rootsHTML += 'No calculadas';
+                    rootsClass += 'warning';
                 }
+                
                 DOM.rootsDisplay.innerHTML = rootsHTML;
                 DOM.rootsDisplay.className = rootsClass;
-
-                DOM.vertexDisplay.innerHTML = `<strong>Vértice:</strong> \\((${vertex.x.toFixed(2)}, ${vertex.y.toFixed(2)})\\)`;
-                DOM.yInterceptDisplay.innerHTML = `<strong>Ord. Origen:</strong> \\((0, ${y_intercept.toFixed(2)})\\)`;
-                DOM.axisDisplay.innerHTML = `<strong>Eje Simetría:</strong> \\(x = ${vertex.x.toFixed(2)}\\)`;
+                
+                // Vértice - SIN MathJax
+                DOM.vertexDisplay.className = 'result-chip success';
+                const vertexType = state.a > 0 ? 'Mínimo' : 'Máximo';
+                DOM.vertexDisplay.innerHTML = `<strong>Vértice (${vertexType}):</strong><br>V = (${vertex.x.toFixed(3)}, ${vertex.y.toFixed(3)})`;
+                
+                // Ordenada al origen - SIN MathJax
+                DOM.yInterceptDisplay.className = 'result-chip';
+                DOM.yInterceptDisplay.innerHTML = `<strong>Ordenada al origen:</strong><br>(0, ${y_intercept.toFixed(3)})`;
+                
+                // Eje de simetría - SIN MathJax
+                DOM.axisDisplay.className = 'result-chip';
+                DOM.axisDisplay.innerHTML = `<strong>Eje de simetría:</strong><br>x = ${vertex.x.toFixed(3)}`;
             }
 
             function renderGraph(container, options = {}) {
+                // Nota de optimización: Regeneramos el SVG completo con innerHTML para simplicidad.
+                // Para aplicaciones con >60 actualizaciones/seg, considerar manipulación directa del DOM 
+                // actualizando solo atributos (d, cx, cy) de elementos existentes.
+                // Con debouncing de 50ms, esta estrategia es suficientemente performante.
+                
                 const { a, b, c, solution } = state;
-                const { width = 500, height = 400, padding: P = 45 } = options;
+                const { width = 500, height = 400, padding: P = 55 } = options;
                 const { roots, vertex, y_intercept } = solution;
-                const f = x => a*x**2 + b*x + c;
-
-                const importantX = [...roots, vertex.x, 0];
-                const maxAbsX = Math.max(...importantX.map(Math.abs).filter(isFinite));
-                const xBound = Math.max(5, maxAbsX * 1.4);
+                const f = x => a * x * x + b * x + c;
+                
+                // Determinar rangos inteligentes del gráfico
+                const importantX = [...roots, vertex.x, 0].filter(x => isFinite(x));
+                const maxAbsX = Math.max(...importantX.map(Math.abs), 1);
+                
+                // Mejorar manejo de casos edge: cuando todos los coeficientes son muy pequeños
+                const isSmallScale = Math.abs(a) < 1 && Math.abs(b) < 1 && Math.abs(c) < 1;
+                const baseScale = isSmallScale ? 10 : 5;
+                
+                const xBound = Math.max(baseScale, Math.min(maxAbsX * 1.5, 20));
                 const x_min = -xBound, x_max = xBound;
                 
-                const importantY = [vertex.y, y_intercept, f(x_min), f(x_max)];
-                const maxAbsY = Math.max(...importantY.map(Math.abs).filter(isFinite));
-                const yBound = Math.max(5, maxAbsY * 1.2);
-                const y_min = -yBound, y_max = yBound;
-
-                const plot_points = [];
-                for (let i = 0; i <= 200; i++) {
-                    const x = x_min + i * (x_max - x_min) / 200;
-                    plot_points.push({x, y: f(x)});
+                const sampledY = [];
+                for (let i = 0; i <= 20; i++) {
+                    const x = x_min + i * (x_max - x_min) / 20;
+                    const y = f(x);
+                    if (isFinite(y)) sampledY.push(y);
                 }
-
+                
+                const importantY = [...sampledY, vertex.y, y_intercept].filter(y => isFinite(y));
+                const maxAbsY = Math.max(...importantY.map(Math.abs), 1);
+                const yBound = Math.max(baseScale, Math.min(maxAbsY * 1.3, 20));
+                const y_min = -yBound, y_max = yBound;
+                
+                // Generar puntos de la curva con densidad adaptativa
+                const plot_points = [];
+                const numPoints = 300;
+                for (let i = 0; i <= numPoints; i++) {
+                    const x = x_min + i * (x_max - x_min) / numPoints;
+                    const y = f(x);
+                    if (isFinite(y) && y >= y_min - 1 && y <= y_max + 1) {
+                        plot_points.push({ x, y });
+                    }
+                }
+                
                 const mapX = x => P + (x - x_min) / (x_max - x_min) * (width - 2 * P);
                 const mapY = y => (height - P) - (y - y_min) / (y_max - y_min) * (height - 2 * P);
                 
-                let svg = `<svg viewBox="0 0 ${width} ${height}" class="dynamic-svg" role="img" aria-label="Gráfico interactivo de la parábola y sus puntos notables.">`;
-                const originX = mapX(0), originY = mapY(0);
+                let svg = `<svg viewBox="0 0 ${width} ${height}" class="dynamic-svg" role="img" aria-label="Gráfico de la función cuadrática con sus puntos notables" preserveAspectRatio="xMidYMid meet">`;
                 
+                // Grid de fondo con espaciado inteligente
+                const gridStepX = Math.pow(10, Math.floor(Math.log10((x_max - x_min) / 8)));
+                const gridStepY = Math.pow(10, Math.floor(Math.log10((y_max - y_min) / 8)));
+                
+                for (let x = Math.ceil(x_min / gridStepX) * gridStepX; x <= x_max; x += gridStepX) {
+                    if (Math.abs(x) > EPSILON) {
+                        const px = mapX(x);
+                        if (px >= P && px <= width - P) {
+                            svg += `<line class="svg-grid-line" x1="${px}" y1="${P}" x2="${px}" y2="${height-P}"/>`;
+                        }
+                    }
+                }
+                
+                for (let y = Math.ceil(y_min / gridStepY) * gridStepY; y <= y_max; y += gridStepY) {
+                    if (Math.abs(y) > EPSILON) {
+                        const py = mapY(y);
+                        if (py >= P && py <= height - P) {
+                            svg += `<line class="svg-grid-line" x1="${P}" y1="${py}" x2="${width-P}" y2="${py}"/>`;
+                        }
+                    }
+                }
+                
+                // Ejes principales
+                const originX = mapX(0), originY = mapY(0);
                 svg += `<line class="svg-axis" x1="${originX}" y1="${P}" x2="${originX}" y2="${height-P}"/>`;
                 svg += `<line class="svg-axis" x1="${P}" y1="${originY}" x2="${width-P}" y2="${originY}"/>`;
                 
-                svg += `<text class="svg-axis-name-label" x="${width - P}" y="${originY - 8}" text-anchor="end">X</text>`;
-                svg += `<text class="svg-axis-name-label" x="${originX + 8}" y="${P + 10}" text-anchor="start">Y</text>`;
+                // Etiquetas de ejes con flechas
+                svg += `<text class="svg-axis-name-label" x="${width - P + 10}" y="${originY + 5}" text-anchor="start">X</text>`;
+                svg += `<text class="svg-axis-name-label" x="${originX + 5}" y="${P - 10}" text-anchor="start">Y</text>`;
                 
+                // Ticks y etiquetas numéricas
+                const numTicks = 5;
+                for (let i = 0; i <= numTicks; i++) {
+                    const x = x_min + i * (x_max - x_min) / numTicks;
+                    if (Math.abs(x) > 0.1) {
+                        const px = mapX(x);
+                        svg += `<line class="svg-axis" x1="${px}" y1="${originY - 4}" x2="${px}" y2="${originY + 4}"/>`;
+                        svg += `<text class="svg-axis-tick-label" x="${px}" y="${originY + 16}" text-anchor="middle">${x.toFixed(1)}</text>`;
+                    }
+                }
+                
+                for (let i = 0; i <= numTicks; i++) {
+                    const y = y_min + i * (y_max - y_min) / numTicks;
+                    if (Math.abs(y) > 0.1) {
+                        const py = mapY(y);
+                        svg += `<line class="svg-axis" x1="${originX - 4}" y1="${py}" x2="${originX + 4}" y2="${py}"/>`;
+                        svg += `<text class="svg-axis-tick-label" x="${originX - 8}" y="${py + 4}" text-anchor="end">${y.toFixed(1)}</text>`;
+                    }
+                }
+                
+                // Eje de simetría
                 const axisX = mapX(vertex.x);
-                svg += `<line class="svg-axis-symmetry" x1="${axisX}" y1="${P}" x2="${axisX}" y2="${height-P}"/>`;
-                svg += `<text class="svg-axis-label" x="${axisX + 5}" y="${P + 12}">Eje</text>`;
+                if (axisX >= P && axisX <= width - P) {
+                    svg += `<line class="svg-axis-symmetry" x1="${axisX}" y1="${P}" x2="${axisX}" y2="${height-P}"/>`;
+                    // Evitar solapamiento de etiquetas con mejor posicionamiento
+                    const labelY = P + 16;
+                    svg += `<text class="svg-axis-label" x="${axisX + 6}" y="${labelY}">x=${vertex.x.toFixed(2)}</text>`;
+                }
                 
-                svg += `<path class="svg-curve" d="${plot_points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${mapX(p.x)} ${mapY(p.y)}`).join(' ')}"/>`;
+                // Curva de la parábola
+                if (plot_points.length > 0) {
+                    svg += `<path class="svg-curve" d="${plot_points.map((p, i) => {
+                        const px = mapX(p.x);
+                        const py = mapY(p.y);
+                        return `${i === 0 ? 'M' : 'L'} ${px} ${py}`;
+                    }).join(' ')}"/>`;
+                }
                 
+                // Raíces reales con mejor espaciado de etiquetas
                 roots.forEach((r, i) => {
-                    const yOffset = i % 2 === 0 ? 18 : -10;
-                    svg += `<circle class="svg-point svg-root" cx="${mapX(r)}" cy="${originY}" r="5"/>
-                            <text class="svg-label svg-root-label" x="${mapX(r)}" y="${originY + yOffset}" text-anchor="middle">(${r.toFixed(2)}, 0)</text>`;
+                    const rx = mapX(r);
+                    if (rx >= P && rx <= width - P) {
+                        svg += `<circle class="svg-point svg-root" cx="${rx}" cy="${originY}" r="6"/>`;
+                        
+                        // Alternar posición de etiquetas para evitar solapamiento
+                        const yOffset = i % 2 === 0 ? 20 : -12;
+                        const isCloseToVertex = Math.abs(r - vertex.x) < (x_max - x_min) * 0.1;
+                        const adjustedOffset = isCloseToVertex ? (i % 2 === 0 ? 28 : -20) : yOffset;
+                        
+                        svg += `<text class="svg-label svg-root-label" x="${rx}" y="${originY + adjustedOffset}" text-anchor="middle">${r.toFixed(2)}</text>`;
+                    }
                 });
                 
+                // Vértice con posicionamiento inteligente
                 const vx = mapX(vertex.x), vy = mapY(vertex.y);
-                svg += `<circle class="svg-point svg-vertex" cx="${vx}" cy="${vy}" r="5"/>
-                        <text class="svg-label svg-vertex-label" x="${vx}" y="${vy + (a > 0 ? 20 : -10)}" text-anchor="middle">V(${vertex.x.toFixed(2)}, ${vertex.y.toFixed(2)})</text>`;
+                if (vx >= P && vx <= width - P && vy >= P && vy <= height - P) {
+                    svg += `<circle class="svg-point svg-vertex" cx="${vx}" cy="${vy}" r="6"/>`;
+                    const vLabelY = a > 0 ? vy + 22 : vy - 14;
+                    svg += `<text class="svg-label svg-vertex-label" x="${vx}" y="${vLabelY}" text-anchor="middle">V(${vertex.x.toFixed(2)}, ${vertex.y.toFixed(2)})</text>`;
+                }
                 
+                // Ordenada al origen con posicionamiento inteligente
                 const yIntX = mapX(0), yIntY = mapY(y_intercept);
-                const yIntLabelAnchor = (vertex.x > 0 && Math.abs(vertex.x) > 1) ? 'end' : 'start';
-                const yIntLabelXOffset = (vertex.x > 0 && Math.abs(vertex.x) > 1) ? -8 : 8;
-                svg += `<circle class="svg-point svg-y-intercept" cx="${yIntX}" cy="${yIntY}" r="5"/>
-                        <text class="svg-label svg-y-intercept-label" x="${yIntX + yIntLabelXOffset}" y="${yIntY + 4}" text-anchor="${yIntLabelAnchor}">(0, ${y_intercept.toFixed(2)})</text>`;
+                if (yIntY >= P && yIntY <= height - P) {
+                    svg += `<circle class="svg-point svg-y-intercept" cx="${yIntX}" cy="${yIntY}" r="6"/>`;
+                    const isCloseToOrigin = Math.abs(y_intercept) < (y_max - y_min) * 0.1;
+                    const labelOffset = vertex.x > 1 ? -10 : 10;
+                    const anchor = vertex.x > 1 ? 'end' : 'start';
+                    const adjustedY = isCloseToOrigin ? yIntY - 12 : yIntY + 5;
+                    svg += `<text class="svg-label svg-y-intercept-label" x="${yIntX + labelOffset}" y="${adjustedY}" text-anchor="${anchor}">(0, ${y_intercept.toFixed(2)})</text>`;
+                }
+                
                 svg += `</svg>`;
                 container.innerHTML = svg;
             }
 
             function updateUI() {
-                if (Math.abs(state.a) < EPSILON) {
-                    DOM.errorMessageA.style.display = 'block';
-                    DOM.dynamicGraphContainer.innerHTML = '';
-                    DOM.keyResultsContainer.style.visibility = 'hidden';
-                    return;
+                try {
+                    if (Math.abs(state.a) < EPSILON) {
+                        DOM.errorMessageA.style.display = 'block';
+                        DOM.dynamicGraphContainer.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-color);">Configure el coeficiente <strong>a</strong> diferente de cero para ver la parábola.</div>';
+                        DOM.keyResultsContainer.style.visibility = 'hidden';
+                        return;
+                    }
+                    DOM.errorMessageA.style.display = 'none';
+                    DOM.keyResultsContainer.style.visibility = 'visible';
+                    
+                    state.solution = solveQuadratic(state.a, state.b, state.c);
+                    renderEquation();
+                    renderResults();
+                    renderGraph(DOM.dynamicGraphContainer);
+                    
+                    // MathJax SOLO para la ecuación principal (mucho más rápido)
+                    if (window.MathJax?.typesetPromise) {
+                        MathJax.typesetPromise([DOM.currentEquation]).catch(err => console.warn('MathJax error:', err));
+                    }
+                } catch (error) {
+                    console.error('Error al actualizar UI:', error);
+                    DOM.dynamicGraphContainer.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--error-color);">Error al generar el gráfico. Intente con valores diferentes.</div>';
                 }
-                DOM.errorMessageA.style.display = 'none';
-                DOM.keyResultsContainer.style.visibility = 'visible';
-                
-                state.solution = solveQuadratic(state.a, state.b, state.c);
-                renderEquation();
-                renderResults();
-                renderGraph(DOM.dynamicGraphContainer);
-                
-                if (window.MathJax?.typesetPromise) MathJax.typesetPromise();
             }
 
             function handleSliderInput(coeff, value) {
                 state[coeff] = value;
                 DOM.valueSpans[coeff].textContent = value.toFixed(1);
-                requestAnimationFrame(updateUI);
+                
+                // Debouncing para mejor performance
+                if (debounceTimer) clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    requestAnimationFrame(updateUI);
+                }, 50);
             }
 
             function showTab(tabName) {
@@ -373,22 +704,107 @@
                 document.querySelector(`.tab-button[data-tab="${tabName}"]`).classList.add('active');
             }
 
-            function initialize() {
-                Object.keys(DOM.sliders).forEach(coeff => {
-                    DOM.sliders[coeff].addEventListener('input', (e) => handleSliderInput(coeff.toLowerCase(), parseFloat(e.target.value)));
+            // Focus Trap para el modal (A11y)
+            function trapFocus(element) {
+                const focusableElements = element.querySelectorAll(
+                    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                );
+                const firstFocusable = focusableElements[0];
+                const lastFocusable = focusableElements[focusableElements.length - 1];
+
+                element.addEventListener('keydown', function(e) {
+                    if (e.key !== 'Tab') return;
+
+                    if (e.shiftKey) {
+                        if (document.activeElement === firstFocusable) {
+                            lastFocusable.focus();
+                            e.preventDefault();
+                        }
+                    } else {
+                        if (document.activeElement === lastFocusable) {
+                            firstFocusable.focus();
+                            e.preventDefault();
+                        }
+                    }
                 });
+            }
+
+            function initialize() {
+                // Event listeners para sliders
+                Object.keys(DOM.sliders).forEach(coeff => {
+                    const slider = DOM.sliders[coeff];
+                    
+                    // Input event para actualización en tiempo real
+                    slider.addEventListener('input', (e) => {
+                        handleSliderInput(coeff, parseFloat(e.target.value));
+                    });
+                    
+                    // Change event como respaldo
+                    slider.addEventListener('change', (e) => {
+                        handleSliderInput(coeff, parseFloat(e.target.value));
+                    });
+                });
+                
+                // Tabs
                 DOM.tabsContainer.addEventListener('click', (e) => {
                     const button = e.target.closest('.tab-button');
                     if (button) showTab(button.dataset.tab);
                 });
+                
+                // Modal
                 DOM.amplifyGraphBtn.addEventListener('click', () => {
+                    lastFocusedElement = document.activeElement; // Guardar el elemento que tenía foco
                     DOM.modal.classList.add('active');
-                    renderGraph(DOM.modalGraphContainer, { width: 800, height: 600, padding: 50 });
+                    
+                    // Tamaño adaptativo para el modal
+                    const isMobile = window.innerWidth <= 768;
+                    const modalWidth = isMobile ? Math.min(window.innerWidth - 40, 600) : 800;
+                    const modalHeight = isMobile ? Math.min(window.innerHeight * 0.6, 500) : 600;
+                    renderGraph(DOM.modalGraphContainer, { width: modalWidth, height: modalHeight, padding: isMobile ? 50 : 60 });
+                    
+                    // Activar focus trap y mover foco al modal
+                    trapFocus(DOM.modal.querySelector('.modal-content'));
+                    DOM.modalCloseBtn.focus();
+                    
+                    // Prevenir scroll del body
+                    document.body.style.overflow = 'hidden';
                 });
-                const closeModal = () => DOM.modal.classList.remove('active');
+                
+                const closeModal = () => {
+                    DOM.modal.classList.remove('active');
+                    document.body.style.overflow = ''; // Restaurar scroll
+                    
+                    // Devolver foco al botón que abrió el modal
+                    if (lastFocusedElement) {
+                        lastFocusedElement.focus();
+                    }
+                };
+                
                 DOM.modalCloseBtn.addEventListener('click', closeModal);
-                DOM.modal.addEventListener('click', (e) => { if (e.target === DOM.modal) closeModal(); });
-                document.addEventListener('keydown', (e) => { if (e.key === "Escape" && DOM.modal.classList.contains('active')) closeModal(); });
+                DOM.modal.addEventListener('click', (e) => { 
+                    if (e.target === DOM.modal) closeModal(); 
+                });
+                
+                // Cerrar modal con Escape
+                document.addEventListener('keydown', (e) => { 
+                    if (e.key === "Escape" && DOM.modal.classList.contains('active')) {
+                        closeModal(); 
+                    }
+                });
+                
+                // Responsive: re-renderizar gráfico en resize
+                let resizeTimer;
+                window.addEventListener('resize', () => {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(() => {
+                        if (DOM.modal.classList.contains('active')) {
+                            const isMobile = window.innerWidth <= 768;
+                            const modalWidth = isMobile ? Math.min(window.innerWidth - 40, 600) : 800;
+                            const modalHeight = isMobile ? Math.min(window.innerHeight * 0.6, 500) : 600;
+                            renderGraph(DOM.modalGraphContainer, { width: modalWidth, height: modalHeight, padding: isMobile ? 50 : 60 });
+                        }
+                    }, 250);
+                });
                 
                 fillStaticContent();
                 updateUI();
