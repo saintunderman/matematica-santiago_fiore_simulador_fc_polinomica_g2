@@ -1,2 +1,6 @@
-Este es un recurso educativo para aprender los conceptos relacionados con la función cuadrática en su forma polinómica.
-Más contenidos de matemática en: https://sites.google.com/view/santiago-fiore/portada
+## Licencia y Créditos
+
+Desarrollado por **Santiago Fiore**.
+
+* **Sitio Web:** https://sites.google.com/view/santiago-fiore/portada
+* **Licencia:** Creative Commons CC BY-NC-SA 4.0 (Atribución-NoComercial-CompartirIgual).
