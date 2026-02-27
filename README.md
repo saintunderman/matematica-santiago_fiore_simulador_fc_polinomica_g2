@@ -22,13 +22,6 @@ El propósito de esta herramienta es permitir a los usuarios explorar cómo los 
 - **Módulo de Aprendizaje:** Incluye secciones de teoría, historia de las cónicas y el método paso a paso para **completar cuadrados**.
 - **Accesibilidad y Diseño:** Interfaz *mobile-first*, modo responsivo y soporte para lectores de pantalla (ARIA live regions).
 
-## Tecnologías Utilizadas
-
-- **HTML5 / CSS3:** Maquetación moderna utilizando variables CSS y Grid/Flexbox.
-- **JavaScript (Vanilla):** Lógica matemática y manipulación dinámica del DOM sin dependencias externas pesadas.
-- **MathJax 3:** Renderizado de notación matemática de alta calidad.
-- **SVG Dinámico:** Generación de gráficos vectoriales en tiempo real para una visualización nítida en cualquier resolución.
-
 ## Uso
 
 No requiere instalación. Acceso al simulador:https://saintunderman.github.io/matematica-santiago_fiore_simulador_fc_polinomica_g2/
