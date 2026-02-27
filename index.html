@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Explorador interactivo de funciones cuadráticas con visualización dinámica de parábolas y análisis matemático riguroso.">
+    <title>Explorador de Parábolas: Análisis de la Función Cuadrática</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Fira+Code&display=swap" rel="stylesheet">
+    
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
+            svg: { fontCache: 'global' },
+            options: { enableMenu: false }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --surface-color: #ffffff;
+            --border-color: #e2e8f0;
+            --text-color: #334155;
+            --heading-color: #0f172a;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --shadow-color: rgba(0, 0, 0, 0.06);
+            --info-bg: #dbeafe;
+            --info-border: #3b82f6;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            html { scroll-behavior: auto; }
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.65;
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+        
+        .site-header { text-align: center; padding: 2rem 0; }
+        .site-header h1 { font-size: 2.5rem; color: var(--heading-color); margin-bottom: 0.75rem; font-weight: 700; letter-spacing: -0.02em; }
+        .site-header p { font-size: 1.125rem; color: var(--text-color); max-width: 700px; margin: 0 auto; line-height: 1.6; }
+        
+        main { padding: 2rem 0; }
+        
+        .tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 2rem; }
+        .tab-button { padding: 1rem 1.5rem; cursor: pointer; background: none; border: none; color: var(--text-color); font-size: 1rem; font-weight: 500; position: relative; transition: color 0.3s ease; }
+        .tab-button::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 2px; background-color: var(--accent-color); transform: scaleX(0); transform-origin: center; transition: transform 0.3s ease; }
+        .tab-button.active, .tab-button:hover { color: var(--accent-color); }
+        .tab-button.active::after { transform: scaleX(1); }
+
+        .tab-content { display: none; animation: fadeIn 0.5s ease-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px var(--shadow-color); transition: box-shadow 0.3s ease; }
+        .card:hover { box-shadow: 0 4px 16px var(--shadow-color); }
+        h3 { color: var(--heading-color); margin-bottom: 1.5rem; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; }
+        
+        .calculator-layout { display: grid; grid-template-columns: 380px 1fr; gap: 2rem; align-items: start; margin-bottom: 1.5rem; }
+        .input-panel { position: sticky; top: 2rem; }
+        .output-panel { display: flex; flex-direction: column; gap: 1.5rem; }
+        
+        /* Botones de zoom con touch targets apropiados (44x44px mínimo WCAG 2.1) */
+        .zoom-btn {
+            min-width: 44px;
+            min-height: 44px;
+            border: none;
+            background: var(--accent-color);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 22px;
+            font-weight: bold;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .zoom-btn:hover {
+            background: #2563eb;
+            transform: scale(1.05);
+        }
+        .zoom-btn:active {
+            transform: scale(0.95);
+        }
+        .zoom-btn-reset {
+            background: var(--success-color);
+            font-size: 20px;
+        }
+        .zoom-btn-reset:hover {
+            background: #059669;
+        }
+        
+        .properties-section { background-color: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 1.25rem; margin-top: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .properties-section h4 { margin-top: 0; margin-bottom: 0.75rem; color: #15803d; font-size: 1.15rem; font-weight: 600; }
+        .property-item { display: flex; justify-content: space-between; padding: 0.625rem 0; border-bottom: 1px dashed #d1d5db; align-items: baseline; }
+        .property-item:last-child { border-bottom: none; }
+        .property-label { font-weight: 500; color: #1f2937; font-size: 0.95rem; }
+        .property-value { font-family: 'Fira Code', monospace; color: #047857; font-weight: 600; font-size: 0.9rem; }
+        
+        .coefficient-control { margin-bottom: 1.5rem; }
+        .coefficient-control label { 
+            display: block; 
+            font-weight: 500; 
+            margin-bottom: 0.5rem; 
+            color: var(--heading-color);
+        }
+        .coefficient-value { 
+            font-weight: 600; 
+            color: var(--accent-color); 
+            margin-left: 0.25rem; 
+        }
+        
+        /* Clase para elementos solo lectores de pantalla (accesibilidad) */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+        
+        .slider { 
+            width: 100%; 
+            cursor: pointer; 
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--border-color);
+            outline: none;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .slider:hover { background: var(--accent-color); opacity: 0.7; }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-color);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid var(--surface-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--accent-color);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid var(--surface-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .slider:active::-webkit-slider-thumb { transform: scale(1.2); }
+        .slider:active::-moz-range-thumb { transform: scale(1.2); }
+        
+        #currentEquation { font-family: 'Fira Code', monospace; background-color: var(--bg-color); padding: 1rem; border-radius: 8px; text-align: center; font-size: 1.1rem; border: 1px solid var(--border-color); min-height: 50px; }
+        .math-display { margin: 1rem 0; text-align: center; overflow-x: auto; }
+        .info-box { background-color: var(--info-bg); border-left: 4px solid var(--info-border); padding: 1.25rem; margin-bottom: 1.5rem; border-radius: 8px; font-size: 0.95rem; line-height: 1.6; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        
+        .graph-card { padding: 1.5rem; }
+        #mainGraphContainer {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            min-height: 300px;
+            max-height: 600px;
+            background-color: #fafbfd;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .dynamic-svg { width: 100%; height: 100%; border-radius: 8px; background-color: transparent; }
+        
+        .svg-axis { stroke: var(--heading-color); stroke-width: 1.5; }
+        .svg-grid-line { stroke: var(--border-color); stroke-width: 0.5; opacity: 0.5; }
+        .svg-axis-name-label { font-size: 16px; fill: var(--heading-color); font-family: 'Inter', sans-serif; font-weight: 600; }
+        .svg-axis-tick-label { font-size: 11px; fill: var(--text-color); font-family: 'Fira Code', monospace; }
+        .svg-axis-symmetry { stroke: var(--success-color); stroke-width: 2; stroke-dasharray: 5, 5; }
+        .svg-axis-label { font-size: 12px; fill: var(--success-color); font-family: 'Fira Code', monospace; font-weight: 500; }
+        .svg-curve { stroke: var(--accent-color); stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+        .svg-point { stroke: var(--surface-color); stroke-width: 2; }
+        .svg-root { fill: var(--error-color); }
+        .svg-vertex { fill: var(--success-color); }
+        .svg-y-intercept { fill: var(--accent-color); }
+        .svg-label { font-size: 13px; font-weight: 600; font-family: 'Fira Code', monospace; }
+        .svg-root-label, .svg-complex-label { fill: var(--error-color); }
+        .svg-vertex-label { fill: var(--success-color); }
+        .svg-y-intercept-label { fill: var(--accent-color); }
+
+        .key-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+        .result-chip { background-color: var(--surface-color); border: 1px solid var(--border-color); border-left-width: 4px; padding: 0.75rem 1rem; border-radius: 8px; font-family: 'Fira Code', monospace; font-size: 0.95rem; text-align: center; }
+        .result-chip.success { border-left-color: var(--success-color); }
+        .result-chip.warning { border-left-color: var(--warning-color); }
+        .result-chip.error { border-left-color: var(--error-color); }
+        
+        .btn-amplify { 
+            display: block; 
+            width: 100%; 
+            margin-top: 1rem; 
+            padding: 0.75rem 1rem; 
+            background-color: var(--accent-color); 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(66, 153, 225, 0.3);
+        }
+        .btn-amplify:hover { 
+            background-color: var(--accent-hover); 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(66, 153, 225, 0.4);
+        }
+        .btn-amplify:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(66, 153, 225, 0.3);
+        }
+        .btn-amplify:focus-visible {
+            outline: 3px solid var(--accent-color);
+            outline-offset: 2px;
+        }
+        
+        /* Focus visible para accesibilidad */
+        *:focus-visible {
+            outline: 2px solid var(--accent-color);
+            outline-offset: 2px;
+        }
+
+        .accordion-item { border-bottom: 1px solid var(--border-color); }
+        .accordion-item:last-child { border-bottom: none; }
+        .accordion-button { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 1.5rem 0; background: none; border: none; color: var(--heading-color); font-size: 1.2rem; font-weight: 700; text-align: left; cursor: pointer; }
+        .accordion-icon { transition: transform 0.3s ease; width: 24px; height: 24px; }
+        .accordion-button[aria-expanded="true"] .accordion-icon { transform: rotate(180deg); }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; }
+        .accordion-content .content-inner { padding-top: 0.5rem; padding-bottom: 1.5rem; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; align-items: center; justify-content: center; z-index: 9999; animation: fadeIn 0.3s ease; isolation: isolate; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: var(--surface-color); padding: 2rem; border-radius: 12px; width: 90%; max-width: 850px; max-height: 90vh; box-shadow: 0 10px 30px rgba(0,0,0,0.2); position: relative; display: flex; flex-direction: column; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .modal-close-btn { background: none; border: none; font-size: 2rem; cursor: pointer; color: var(--text-color); }
+        #modalGraphContainer { flex-grow: 1; min-height: 0; }
+        
+        .site-footer { text-align: center; padding: 2rem 1.5rem; margin-top: 2rem; font-size: 0.9em; color: var(--text-color); border-top: 1px solid var(--border-color); position: relative; z-index: 1; }
+        .site-footer a { color: var(--accent-color); text-decoration: none; font-weight: 500; }
+
+        @media (max-width: 992px) { 
+            .calculator-layout { grid-template-columns: 1fr; } 
+            .input-panel { position: static; } 
+        }
+        @media (max-width: 768px) { 
+            .container { padding: 0 1rem; } 
+            .site-header h1 { font-size: 1.875rem; line-height: 1.2; } 
+            .site-header p { font-size: 1rem; line-height: 1.5; }
+            
+            /* Prevenir que el panel sticky empuje el contenido en móviles */
+            .input-panel {
+                position: relative;
+                top: 0;
+                max-height: none;
+            }
+            .calculator-layout {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .tabs { 
+                flex-wrap: wrap; 
+                gap: 0.5rem; 
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            } 
+            .tab-button { 
+                flex: 0 0 auto;
+                white-space: nowrap;
+                font-size: 0.9rem; 
+                padding: 0.75rem 1rem; 
+            } 
+            .card { padding: 1.5rem; } 
+            .modal-content { padding: 1rem; width: 95%; max-height: 85vh; } 
+            .svg-axis-name-label { font-size: 14px; }
+            .svg-label { font-size: 11px; }
+            .svg-axis-tick-label { font-size: 9px; }
+            .key-results { grid-template-columns: 1fr; }
+            .result-chip { font-size: 0.9rem; }
+            .properties-section { font-size: 0.9rem; }
+        }
+        @media (max-width: 480px) {
+            body { font-size: 15px; }
+            .site-header h1 { font-size: 1.5rem; line-height: 1.25; }
+            .site-header p { font-size: 0.95rem; }
+            .card { padding: 1.25rem; }
+            h3 { font-size: 1.25rem; }
+            .info-box { padding: 1rem; font-size: 0.9rem; }
+            .svg-point { r: 4; }
+            .svg-curve { stroke-width: 2.5; }
+        }
+        @media (max-width: 375px) {
+            .container { padding: 0 0.75rem; }
+            .site-header h1 { font-size: 1.4rem; }
+            .site-header p { font-size: 0.9rem; }
+            .card { padding: 0.875rem; }
+            .tab-button { font-size: 0.85rem; padding: 0.625rem 0.75rem; }
+            .result-chip { font-size: 0.85rem; padding: 0.625rem 0.75rem; }
+            .coefficient-control label { font-size: 0.95rem; }
+            h3 { font-size: 1.1rem; }
+        }
+        @media (max-width: 320px) {
+            .container { padding: 0 0.5rem; }
+            .card { padding: 0.75rem; }
+            .site-header { padding: 1.5rem 0; }
+            .site-header h1 { font-size: 1.3rem; }
+            .info-box { padding: 0.75rem; font-size: 0.9em; }
+            .coefficient-control { margin-bottom: 1.25rem; }
+            .btn-amplify { padding: 0.625rem 0.875rem; font-size: 0.95rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <h1>Explorador de Parábolas</h1>
+            <p>Visualiza y comprende la función cuadrática de manera interactiva.</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <nav class="tabs">
+            <button class="tab-button active" data-tab="calculator">Principal</button>
+            <button class="tab-button" data-tab="forms">Formas de la Función</button>
+            <button class="tab-button" data-tab="completing">Completar Cuadrados</button>
+            <button class="tab-button" data-tab="theory">Teoría</button>
+            <button class="tab-button" data-tab="history">Historia</button>
+            <button class="tab-button" data-tab="examples">Ejemplos</button>
+        </nav>
+
+        <section id="calculator" class="tab-content active">
+            <div class="info-box" style="background-color: #ebf8ff; border-color: var(--accent-color); margin-bottom: 1.5rem;">
+                <strong>🎯 Objetivo de Aprendizaje:</strong> Explora cómo los coeficientes <em>a</em>, <em>b</em> y <em>c</em> afectan la forma y posición de la parábola. Modifica los valores y observa los cambios.
+            </div>
+            
+            <!-- Región ARIA live para anunciar cambios dinámicos (accesibilidad) -->
+            <div id="ariaAnnouncer" role="status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+            
+            <div class="calculator-layout">
+                <div class="input-panel card">
+                    <div class="info-box">
+                        <strong>Función vs. Ecuación:</strong><br>
+                        La <strong>función</strong> \(f(x) = ax^2+bx+c\), con \(a \neq 0\), describe la parábola. La <strong>ecuación</strong> \(ax^2+bx+c=0\) se usa para encontrar sus raíces.
+                    </div>
+                    <h3>Coeficientes de la Función</h3>
+                    <div id="error-message-a" class="result-chip error" style="display:none; text-align:left; margin-bottom: 1rem;">El coeficiente 'a' no puede ser cero para una parábola.</div>
+                    
+                    <div class="coefficients-container">
+                        <div class="coefficient-control">
+                            <label for="sliderA">Coeficiente a: <span class="coefficient-value" id="valueA">1.0</span></label>
+                            <input type="range" id="sliderA" class="slider" min="-10" max="10" step="0.1" value="1" 
+                                   aria-label="Control deslizante para el coeficiente cuadrático a" 
+                                   aria-valuemin="-10" aria-valuemax="10" aria-valuenow="1" 
+                                   aria-describedby="infoA">
+                            <span id="infoA" class="sr-only">Controla la abertura y orientación de la parábola</span>
+                        </div>
+                        
+                        <div class="coefficient-control">
+                            <label for="sliderB">Coeficiente b: <span class="coefficient-value" id="valueB">-2.0</span></label>
+                            <input type="range" id="sliderB" class="slider" min="-10" max="10" step="0.1" value="-2" 
+                                   aria-label="Control deslizante para el coeficiente lineal b" 
+                                   aria-valuemin="-10" aria-valuemax="10" aria-valuenow="-2" 
+                                   aria-describedby="infoB">
+                            <span id="infoB" class="sr-only">Controla la posición horizontal del vértice</span>
+                        </div>
+
+                        <div class="coefficient-control">
+                            <label for="sliderC">Coeficiente c: <span class="coefficient-value" id="valueC">-3.0</span></label>
+                            <input type="range" id="sliderC" class="slider" min="-10" max="10" step="0.1" value="-3" 
+                                   aria-label="Control deslizante para el término independiente c" 
+                                   aria-valuemin="-10" aria-valuemax="10" aria-valuenow="-3" 
+                                   aria-describedby="infoC">
+                            <span id="infoC" class="sr-only">Controla la intersección con el eje Y</span>
+                        </div>
+                    </div>
+
+                    <h3>Función Actual:</h3>
+                    <div id="currentEquation"></div>
+                </div>
+
+                <div class="output-panel">
+                    <div id="key-results-container" class="key-results">
+                        <div id="discriminantDisplay" class="result-chip"></div>
+                        <div id="rootsDisplay" class="result-chip"></div>
+                        <div id="vertexDisplay" class="result-chip"></div>
+                        <div id="yInterceptDisplay" class="result-chip"></div>
+                        <div id="axisDisplay" class="result-chip"></div>
+                    </div>
+                    
+                    <div class="properties-section" id="propertiesSection">
+                        <h4>📊 Propiedades de la Parábola</h4>
+                        <div id="dynamicProperties"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card graph-card" style="margin-top: 2rem;">
+                <h3>Representación gráfica de la parábola</h3>
+                <div style="position: relative;">
+                    <div id="mainGraphContainer"></div>
+                    <div id="zoomControls" style="position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 5px; background: rgba(255,255,255,0.9); padding: 8px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 10;">
+                        <button id="zoomInBtn" class="zoom-btn" title="Acercar" aria-label="Acercar zoom">+</button>
+                        <button id="zoomOutBtn" class="zoom-btn" title="Alejar" aria-label="Alejar zoom">−</button>
+                        <button id="zoomResetBtn" class="zoom-btn zoom-btn-reset" title="Restablecer vista" aria-label="Restablecer zoom">⟲</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="forms" class="tab-content"></section>
+        <section id="completing" class="tab-content"></section>
+
+        <section id="theory" class="tab-content"></section>
+        <section id="history" class="tab-content"></section>
+        <section id="examples" class="tab-content"></section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p style="margin-bottom: 0.5rem;">Recurso educativo desarrollado por <strong>Santiago Fiore</strong></p>
+            <p style="margin-bottom: 0.5rem;">Más contenidos en: <a href="https://sites.google.com/view/santiago-fiore/portada" target="_blank" rel="noopener noreferrer">Sitio Web</a></p>
+            <p style="font-size: 0.9em; color: var(--text-color); margin-top: 1rem;">
+                <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer" style="color: var(--text-color); text-decoration: none; font-weight: 500;">Licencia Creative Commons CC BY-NC-SA 4.0</a> • 2026
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        const ParabolaExplorer = (() => {
+            const state = { a: 1, b: -2, c: -3, solution: {} };
+            const EPSILON = 1e-10;
+            let debounceTimer = null;
+            let mathTimeout = null;
+
+            const DOM = {
+                tabsContainer: document.querySelector('.tabs'),
+                tabContents: document.querySelectorAll('.tab-content'),
+                tabButtons: document.querySelectorAll('.tab-button'),
+                sliders: { a: document.getElementById('sliderA'), b: document.getElementById('sliderB'), c: document.getElementById('sliderC'), },
+                valueSpans: { a: document.getElementById('valueA'), b: document.getElementById('valueB'), c: document.getElementById('valueC'), },
+                errorMessageA: document.getElementById('error-message-a'),
+                currentEquation: document.getElementById('currentEquation'),
+                mainGraphContainer: document.getElementById('mainGraphContainer'),
+                dynamicProperties: document.getElementById('dynamicProperties'),
+                keyResultsContainer: document.getElementById('key-results-container'),
+                discriminantDisplay: document.getElementById('discriminantDisplay'),
+                rootsDisplay: document.getElementById('rootsDisplay'),
+                vertexDisplay: document.getElementById('vertexDisplay'),
+                yInterceptDisplay: document.getElementById('yInterceptDisplay'),
+                axisDisplay: document.getElementById('axisDisplay'),
+                zoomInBtn: document.getElementById('zoomInBtn'),
+                zoomOutBtn: document.getElementById('zoomOutBtn'),
+                zoomResetBtn: document.getElementById('zoomResetBtn'),
+            };
+            
+            // Estado de zoom y pan
+            const graphState = {
+                zoom: 1,
+                panX: 0,
+                panY: 0,
+                isDragging: false,
+                lastMouseX: 0,
+                lastMouseY: 0,
+                updatePending: false
+            };
+            
+            // Funciones de accesibilidad
+            const ariaAnnouncer = document.getElementById('ariaAnnouncer');
+            let announceTimeout = null;
+            
+            function announceChange(message) {
+                if (!ariaAnnouncer) return;
+                clearTimeout(announceTimeout);
+                announceTimeout = setTimeout(() => {
+                    ariaAnnouncer.textContent = message;
+                    // Limpiar después de 3 segundos
+                    setTimeout(() => { ariaAnnouncer.textContent = ''; }, 3000);
+                }, 500); // Debounce de 500ms para evitar anuncios excesivos
+            }
+            
+            function showWarning(message) {
+                if (DOM.errorMessageA) {
+                    DOM.errorMessageA.textContent = message;
+                    DOM.errorMessageA.style.display = 'block';
+                    setTimeout(() => {
+                        DOM.errorMessageA.style.display = 'none';
+                    }, 4000);
+                }
+            }
+
+            function solveQuadratic(a, b, c) {
+                // Validación robusta de entrada con feedback visual
+                if (Math.abs(a) < EPSILON) {
+                    // Mostrar advertencia al usuario en lugar de crash
+                    showWarning('⚠️ El coeficiente a no puede ser cero. Por favor, ajusta el valor.');
+                    // Ajustar automáticamente a un valor mínimo
+                    state.a = a >= 0 ? 0.1 : -0.1;
+                    DOM.sliders.a.value = state.a;
+                    DOM.valueA.textContent = state.a.toFixed(1);
+                    a = state.a;
+                }
+                
+                // Cálculo preciso del discriminante
+                const discriminant = b * b - 4 * a * c;
+                
+                // Cálculo del vértice: V = (-b/2a, c - b²/4a)
+                // Fórmula optimizada: y_v = c - b²/(4a) = (4ac - b²)/(4a) = -Δ/(4a)
+                const vertex_x = -b / (2 * a);
+                const vertex_y = c - (b * b) / (4 * a);
+                const vertex = { x: vertex_x, y: vertex_y };
+                
+                const results = { 
+                    a, b, c, 
+                    discriminant, 
+                    vertex, 
+                    y_intercept: c, 
+                    roots: [], 
+                    complex_roots: [] 
+                };
+                
+                // Clasificación precisa según el discriminante
+                if (discriminant > EPSILON) {
+                    // Fórmula numericamente estable para evitar cancelación catastrófica
+                    const sqrt_d = Math.sqrt(discriminant);
+                    const denom = 2 * a;
+                    
+                    if (b >= 0) {
+                        const r1 = (-b - sqrt_d) / denom;
+                        const r2 = (2 * c) / (-b - sqrt_d);
+                        results.roots.push(Math.min(r1, r2), Math.max(r1, r2));
+                    } else {
+                        const r1 = (-b + sqrt_d) / denom;
+                        const r2 = (2 * c) / (-b + sqrt_d);
+                        results.roots.push(Math.min(r1, r2), Math.max(r1, r2));
+                    }
+                } else if (Math.abs(discriminant) <= EPSILON) {
+                    // Raíz doble
+                    results.roots.push(-b / (2 * a));
+                } else {
+                    // Raíces complejas conjugadas
+                    const real_part = -b / (2 * a);
+                    const imag_part = Math.sqrt(Math.abs(discriminant)) / (2 * a);
+                    results.complex_roots.push({ 
+                        real: real_part, 
+                        imag: imag_part 
+                    });
+                }
+                
+                return results;
+            }
+
+            function renderEquation() {
+                const { a, b, c } = state;
+                
+                const format = (v, term, isFirst) => {
+                    if (Math.abs(v) < EPSILON) return '';
+                    
+                    const sign = isFirst ? (v < 0 ? '-' : '') : (v < 0 ? ' - ' : ' + ');
+                    const absVal = Math.abs(v);
+                    const numStr = absVal.toFixed(1).replace(/\.0$/, '');
+                    
+                    // Para términos con variable, omitir el coeficiente si es 1
+                    if (term && Math.abs(absVal - 1) < EPSILON) {
+                        return `${sign}${term}`;
+                    }
+                    
+                    return `${sign}${numStr}${term}`;
+                };
+                
+                const termA = format(a, 'x^2', true);
+                const termB = format(b, 'x', termA === '');
+                const termC = format(c, '', termA === '' && termB === '');
+                
+                let equation = (termA + termB + termC).trim();
+                
+                // Caso especial: si todos los términos son cero o solo queda c=0
+                if (equation === '' || equation === '+' || equation === '-') {
+                    equation = '0';
+                }
+                
+                DOM.currentEquation.innerHTML = `\\[f(x) = ${equation}\\]`;
+            }
+            
+            function renderResults() {
+                const { discriminant, roots, complex_roots, vertex, y_intercept } = state.solution;
+                
+                // Discriminante - SIN MathJax para mejor performance
+                const discClass = discriminant > EPSILON ? 'success' : Math.abs(discriminant) <= EPSILON ? 'warning' : 'error';
+                const discStatus = discriminant > EPSILON ? ' (2 raíces reales)' : 
+                                  Math.abs(discriminant) <= EPSILON ? ' (raíz doble)' : ' (raíces complejas)';
+                DOM.discriminantDisplay.className = `result-chip ${discClass}`;
+                DOM.discriminantDisplay.innerHTML = `<strong>Discriminante:</strong> Δ = ${discriminant.toFixed(3)}<br><small>${discStatus}</small>`;
+                
+                // Raíces - SIN MathJax para mejor performance
+                let rootsHTML = '<strong>Raíces:</strong><br>';
+                let rootsClass = 'result-chip ';
+                
+                if (roots.length === 2) {
+                    rootsHTML += `x₁ = ${roots[0].toFixed(3)}<br>x₂ = ${roots[1].toFixed(3)}`;
+                    rootsClass += 'success';
+                } else if (roots.length === 1) {
+                    rootsHTML += `x₁,₂ = ${roots[0].toFixed(3)}`;
+                    rootsClass += 'warning';
+                } else if (complex_roots.length > 0) {
+                    const { real, imag } = complex_roots[0];
+                    // Mostrar ambas raíces complejas conjugadas explícitamente
+                    rootsHTML += `x₁ = ${real.toFixed(3)} + ${Math.abs(imag).toFixed(3)}i<br>`;
+                    rootsHTML += `x₂ = ${real.toFixed(3)} - ${Math.abs(imag).toFixed(3)}i`;
+                    rootsClass += 'error';
+                } else {
+                    // Caso fallback (no debería ocurrir)
+                    rootsHTML += 'No calculadas';
+                    rootsClass += 'warning';
+                }
+                
+                DOM.rootsDisplay.innerHTML = rootsHTML;
+                DOM.rootsDisplay.className = rootsClass;
+                
+                // Vértice - SIN MathJax
+                DOM.vertexDisplay.className = 'result-chip success';
+                const vertexType = state.a > 0 ? 'Mínimo' : 'Máximo';
+                DOM.vertexDisplay.innerHTML = `<strong>Vértice (${vertexType}):</strong><br>V = (${vertex.x.toFixed(3)}, ${vertex.y.toFixed(3)})`;
+                
+                // Ordenada al origen - SIN MathJax
+                DOM.yInterceptDisplay.className = 'result-chip';
+                DOM.yInterceptDisplay.innerHTML = `<strong>Ordenada al origen:</strong><br>(0, ${y_intercept.toFixed(3)})`;
+                
+                // Eje de simetría - SIN MathJax
+                DOM.axisDisplay.className = 'result-chip';
+                DOM.axisDisplay.innerHTML = `<strong>Eje de simetría:</strong><br>x = ${vertex.x.toFixed(3)}`;
+            }
+            
+            function renderDynamicProperties() {
+                const { a, b, c, solution } = state;
+                const { discriminant, roots, vertex } = solution;
+                
+                let html = '';
+                
+                // Concavidad
+                const concavity = a > 0 ? 'C\u00f3ncava hacia arriba (\u222a)' : 'C\u00f3ncava hacia abajo (\u2229)';
+                const extremeType = a > 0 ? 'M\u00ednimo' : 'M\u00e1ximo';
+                html += `<div class="property-item"><span class="property-label">Concavidad:</span><span class="property-value">${concavity}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Extremo:</span><span class="property-value">${extremeType} en (${vertex.x.toFixed(3)}, ${vertex.y.toFixed(3)})</span></div>`;
+                
+                // Dominio y conjunto imagen
+                html += `<div class="property-item"><span class="property-label">Dominio:</span><span class="property-value">\u211d (todos los reales)</span></div>`;
+                const rangeStr = a > 0 ? `[${vertex.y.toFixed(3)}, +\u221e)` : `(-\u221e, ${vertex.y.toFixed(3)}]`;
+                html += `<div class="property-item"><span class="property-label">Conjunto imagen:</span><span class="property-value">${rangeStr}</span></div>`;
+                
+                // Cantidad de ra\u00edces reales
+                let rootsCount = '0 ra\u00edces reales';
+                if (roots.length === 2) rootsCount = '2 ra\u00edces reales distintas';
+                else if (roots.length === 1) rootsCount = '1 ra\u00edz real doble';
+                html += `<div class="property-item"><span class="property-label">Ra\u00edces:</span><span class="property-value">${rootsCount}</span></div>`;
+                
+                // Crecimiento y decrecimiento
+                const increasing = a > 0 ? `(${vertex.x.toFixed(3)}, +\u221e)` : `(-\u221e, ${vertex.x.toFixed(3)})`;
+                const decreasing = a > 0 ? `(-\u221e, ${vertex.x.toFixed(3)})` : `(${vertex.x.toFixed(3)}, +\u221e)`;
+                html += `<div class="property-item"><span class="property-label">Creciente en:</span><span class="property-value">${increasing}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Decreciente en:</span><span class="property-value">${decreasing}</span></div>`;
+                
+                if (DOM.dynamicProperties) {
+                    DOM.dynamicProperties.innerHTML = html;
+                }
+            }
+            
+            function renderFunctionForms() {
+                const { a, b, c, solution } = state;
+                const { roots, vertex } = solution;
+                
+                const formPolyEl = document.getElementById('formPoly');
+                const formFactorEl = document.getElementById('formFactor');
+                const formCanonEl = document.getElementById('formCanon');
+                
+                if (!formPolyEl || !formFactorEl || !formCanonEl) return;
+                
+                // Función auxiliar para formatear números
+                const fmt = (num) => {
+                    const rounded = Math.abs(num) < EPSILON ? 0 : num;
+                    return rounded.toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1');
+                };
+                
+                // Forma polinómica
+                const formatTerm = (coef, term, isFirst) => {
+                    if (Math.abs(coef) < EPSILON) return '';
+                    const sign = isFirst ? (coef < 0 ? '-' : '') : (coef < 0 ? ' - ' : ' + ');
+                    const absVal = Math.abs(coef);
+                    const numStr = fmt(absVal);
+                    if (term && Math.abs(absVal - 1) < EPSILON) return `${sign}${term}`;
+                    return `${sign}${numStr}${term}`;
+                };
+                
+                const termA = formatTerm(a, 'x²', true);
+                const termB = formatTerm(b, 'x', termA === '');
+                const termC = formatTerm(c, '', termA === '' && termB === '');
+                let polyForm = (termA + termB + termC).trim() || '0';
+                formPolyEl.textContent = `f(x) = ${polyForm}`;
+                
+                // Forma factorizada
+                if (roots.length === 2) {
+                    const r1 = fmt(roots[0]);
+                    const r2 = fmt(roots[1]);
+                    const aStr = Math.abs(a - 1) < EPSILON ? '' : (Math.abs(a + 1) < EPSILON ? '-' : fmt(a));
+                    const term1 = roots[0] >= 0 ? `(x - ${r1})` : `(x + ${fmt(-roots[0])})`;
+                    const term2 = roots[1] >= 0 ? `(x - ${r2})` : `(x + ${fmt(-roots[1])})`;
+                    formFactorEl.textContent = `f(x) = ${aStr}${term1}${term2}`;
+                    formFactorEl.parentElement.style.opacity = '1';
+                } else if (roots.length === 1) {
+                    const r = fmt(roots[0]);
+                    const aStr = Math.abs(a - 1) < EPSILON ? '' : (Math.abs(a + 1) < EPSILON ? '-' : fmt(a));
+                    const term = roots[0] >= 0 ? `(x - ${r})` : `(x + ${fmt(-roots[0])})`;
+                    formFactorEl.textContent = `f(x) = ${aStr}${term}²`;
+                    formFactorEl.parentElement.style.opacity = '1';
+                } else {
+                    formFactorEl.textContent = 'No existe (raíces complejas)';
+                    formFactorEl.parentElement.style.opacity = '0.6';
+                }
+                
+                // Forma canónica: f(x) = a(x - h)² + k
+                // Convención de signos: Si h<0, (x - h) se muestra como (x + |h|)
+                // Ejemplo: h=-2 → (x - (-2)) = (x + 2); k=-3 → +(-3) = -3
+                const h = fmt(vertex.x);
+                const k = fmt(vertex.y);
+                const aStr = Math.abs(a - 1) < EPSILON ? '' : (Math.abs(a + 1) < EPSILON ? '-' : fmt(a) + '·');
+                const hTerm = vertex.x >= 0 ? `(x - ${h})` : `(x + ${fmt(-vertex.x)})`;
+                const kTerm = vertex.y >= 0 ? ` + ${k}` : ` - ${fmt(-vertex.y)}`;
+                formCanonEl.textContent = `f(x) = ${aStr}${hTerm}²${kTerm}`;
+            }
+
+            function renderCompletingSquareProcess() {
+                // Renderiza el proceso dinámico de completar cuadrados con valores actuales
+                const { a, b, c, solution } = state;
+                const { vertex } = solution;
+                
+                const processContainer = document.getElementById('completingSquareProcess');
+                if (!processContainer) return;
+                
+                // Formateo preciso que evita dobles negaciones
+                const fmt = (num) => {
+                    const rounded = Math.abs(num) < EPSILON ? 0 : num;
+                    return rounded.toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1');
+                };
+                const sign = (num) => num >= 0 ? '+' : '-';
+                
+                const b_over_a = b/a;
+                const half_b_over_a = b/(2*a);
+                const half_b_over_a_sq = half_b_over_a * half_b_over_a;
+                const dist_a_sq = a * half_b_over_a_sq; // a * (b/2a)²
+                const h = vertex.x;
+                const k = vertex.y;
+                
+                const html = `
+                    <div style="background-color: #f0f9ff; border: 2px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
+                        <h4 style="margin-top: 0; color: var(--heading-color);"><strong>📊 Proceso con Función Actual</strong></h4>
+                        <p style="margin-bottom: 1rem;">Transformando <strong>f(x) = ${fmt(a)}x² ${sign(b)} ${fmt(Math.abs(b))}x ${sign(c)} ${fmt(Math.abs(c))}</strong> a forma canónica:</p>
+                        
+                        <div class="math-display" style="line-height: 2.5; font-size: 1.05em;">
+                            <p><strong>Paso 1:</strong> Factorizar el coeficiente principal \\(a = ${fmt(a)}\\)</p>
+                            \\[ f(x) = ${fmt(a)}\\left(x^2 ${sign(b_over_a)} ${fmt(Math.abs(b_over_a))}x\\right) ${sign(c)} ${fmt(Math.abs(c))} \\]
+                            
+                            <p style="margin-top: 1rem;"><strong>Paso 2:</strong> Identificar el término que completa el cuadrado</p>
+                            <p style="font-size: 0.95em; color: #6b7280; margin: 0.5rem 0;">Dentro del paréntesis, tomamos la mitad del coeficiente de \\(x\\) y lo elevamos al cuadrado: \\(\\left(\\frac{b}{2a}\\right)^2 = \\left(${fmt(half_b_over_a)}\\right)^2 = ${fmt(half_b_over_a_sq)}\\)</p>
+                            
+                            <p style="margin-top: 1rem;"><strong>Paso 3:</strong> <span style="background-color: #fef3c7; padding: 0.2em 0.5em; border-radius: 4px;">Sumar y restar \\(${fmt(half_b_over_a_sq)}\\) dentro del paréntesis</span></p>
+                            <p style="font-size: 0.95em; color: #6b7280; margin: 0.5rem 0;">Este paso mantiene la igualdad (sumamos y restamos lo mismo), pero permite formar un trinomio cuadrado perfecto.</p>
+                            \\[ f(x) = ${fmt(a)}\\left(x^2 ${sign(b_over_a)} ${fmt(Math.abs(b_over_a))}x + ${fmt(half_b_over_a_sq)} - ${fmt(half_b_over_a_sq)}\\right) ${sign(c)} ${fmt(Math.abs(c))} \\]
+                            
+                            <p style="margin-top: 1rem;"><strong>Paso 4:</strong> Factorizar el trinomio cuadrado perfecto</p>
+                            \\[ f(x) = ${fmt(a)}\\left[\\left(x ${sign(half_b_over_a)} ${fmt(Math.abs(half_b_over_a))}\\right)^2 - ${fmt(half_b_over_a_sq)}\\right] ${sign(c)} ${fmt(Math.abs(c))} \\]
+                            
+                            <p style="margin-top: 1rem;"><strong>Paso 5:</strong> Distribuir \\(a\\) y simplificar constantemente</p>
+                            \\[ f(x) = ${fmt(a)}\\left(x ${sign(half_b_over_a)} ${fmt(Math.abs(half_b_over_a))}\\right)^2 ${sign(-dist_a_sq)} ${fmt(Math.abs(dist_a_sq))} ${sign(c)} ${fmt(Math.abs(c))} \\]
+                            \\[ f(x) = ${fmt(a)}\\left(x ${sign(-h)} ${fmt(Math.abs(h))}\\right)^2 ${sign(k)} ${fmt(Math.abs(k))} \\]
+                        </div>
+                        
+                        <div style="margin-top: 1.5rem; padding: 1rem; background-color: #d1fae5; border-left: 4px solid var(--success-color); border-radius: 8px;">
+                            <strong>✅ Resultado:</strong> La forma canónica es <strong>f(x) = ${fmt(a)}(x ${sign(-h)} ${fmt(Math.abs(h))})² ${sign(k)} ${fmt(Math.abs(k))}</strong><br>
+                            <strong>Vértice:</strong> V = (${fmt(h)}, ${fmt(k)})
+                        </div>
+                    </div>
+                `;
+                
+                processContainer.innerHTML = html;
+                
+                // MathJax se renderiza desde el debounce en handleSliderInput
+            }
+
+            function renderGraph(container, options = {}) {
+                // Renderizado optimizado con soporte para zoom y pan
+                const { a, b, c, solution } = state;
+                const { width = 600, height = 500, padding: P = 60 } = options;
+                const { roots, vertex, y_intercept } = solution;
+                const f = x => a * x * x + b * x + c;
+                
+                // Aplicar zoom y pan al cálculo de rangos
+                const { zoom, panX, panY } = graphState;
+                
+                // Determinar rangos inteligentes del gráfico
+                const importantX = [...roots, vertex.x, 0].filter(x => isFinite(x));
+                const maxAbsX = Math.max(...importantX.map(Math.abs), 1);
+                
+                const isSmallScale = Math.abs(a) < 1 && Math.abs(b) < 1 && Math.abs(c) < 1;
+                const baseScale = isSmallScale ? 10 : 5;
+                
+                const baseXBound = Math.max(baseScale, Math.min(maxAbsX * 1.5, 20));
+                const xRange = (baseXBound * 2) / zoom;
+                const xCenter = panX;
+                const x_min = xCenter - xRange / 2;
+                const x_max = xCenter + xRange / 2;
+                
+                const sampledY = [];
+                for (let i = 0; i <= 30; i++) {
+                    const x = x_min + i * (x_max - x_min) / 30;
+                    const y = f(x);
+                    if (isFinite(y)) sampledY.push(y);
+                }
+                
+                const importantY = [...sampledY, vertex.y, y_intercept].filter(y => isFinite(y));
+                const maxAbsY = Math.max(...importantY.map(Math.abs), 1);
+                const baseYBound = Math.max(baseScale, Math.min(maxAbsY * 1.3, 20));
+                const yRange = (baseYBound * 2) / zoom;
+                const yCenter = panY;
+                const y_min = yCenter - yRange / 2;
+                const y_max = yCenter + yRange / 2;
+                
+                // Generar puntos de la curva con mayor densidad
+                const plot_points = [];
+                const numPoints = 400;
+                for (let i = 0; i <= numPoints; i++) {
+                    const x = x_min + i * (x_max - x_min) / numPoints;
+                    const y = f(x);
+                    if (isFinite(y) && y >= y_min - 5 && y <= y_max + 5) {
+                        plot_points.push({ x, y });
+                    }
+                }
+                
+                const mapX = x => P + (x - x_min) / (x_max - x_min) * (width - 2 * P);
+                const mapY = y => (height - P) - (y - y_min) / (y_max - y_min) * (height - 2 * P);
+                
+                // Tamaño de fuente adaptativo basado en zoom
+                const baseFontSize = Math.max(10, Math.min(14, 12 * zoom));
+                const labelFontSize = Math.max(11, Math.min(15, 13 * zoom));
+                
+                let svg = `<svg id="mainSvg" viewBox="0 0 ${width} ${height}" class="dynamic-svg" role="img" aria-label="Gráfico de la función cuadrática con sus puntos notables" preserveAspectRatio="xMidYMid meet" style="cursor: default;">`;
+                
+                // Grid de fondo con espaciado adaptativo
+                const gridStepX = Math.pow(10, Math.floor(Math.log10((x_max - x_min) / 8)));
+                const gridStepY = Math.pow(10, Math.floor(Math.log10((y_max - y_min) / 8)));
+                
+                for (let x = Math.ceil(x_min / gridStepX) * gridStepX; x <= x_max; x += gridStepX) {
+                    if (Math.abs(x) > EPSILON) {
+                        const px = mapX(x);
+                        if (px >= P && px <= width - P) {
+                            svg += `<line class="svg-grid-line" x1="${px}" y1="${P}" x2="${px}" y2="${height-P}"/>`;
+                        }
+                    }
+                }
+                
+                for (let y = Math.ceil(y_min / gridStepY) * gridStepY; y <= y_max; y += gridStepY) {
+                    if (Math.abs(y) > EPSILON) {
+                        const py = mapY(y);
+                        if (py >= P && py <= height - P) {
+                            svg += `<line class="svg-grid-line" x1="${P}" y1="${py}" x2="${width-P}" y2="${py}"/>`;
+                        }
+                    }
+                }
+                
+                // Ejes principales
+                const originX = mapX(0), originY = mapY(0);
+                const showOriginX = originX >= P && originX <= width - P;
+                const showOriginY = originY >= P && originY <= height - P;
+                
+                if (showOriginX) {
+                    svg += `<line class="svg-axis" x1="${originX}" y1="${P}" x2="${originX}" y2="${height-P}"/>`;
+                }
+                if (showOriginY) {
+                    svg += `<line class="svg-axis" x1="${P}" y1="${originY}" x2="${width-P}" y2="${originY}"/>`;
+                }
+                
+                // Etiquetas de ejes
+                svg += `<text class="svg-axis-name-label" style="font-size: ${labelFontSize}px" x="${width - P + 10}" y="${showOriginY ? originY + 5 : height - P + 20}" text-anchor="start">X</text>`;
+                svg += `<text class="svg-axis-name-label" style="font-size: ${labelFontSize}px" x="${showOriginX ? originX + 5 : P - 10}" y="${P - 10}" text-anchor="start">Y</text>`;
+                
+                // Ticks y etiquetas numéricas con mejor espaciado
+                const numTicks = Math.min(8, Math.floor((x_max - x_min) / gridStepX));
+                const tickSpacing = (x_max - x_min) / numTicks;
+                
+                for (let i = 0; i <= numTicks; i++) {
+                    const x = x_min + i * tickSpacing;
+                    if (Math.abs(x) > 0.01) {
+                        const px = mapX(x);
+                        if (px >= P && px <= width - P && showOriginY) {
+                            svg += `<line class="svg-axis" x1="${px}" y1="${originY - 4}" x2="${px}" y2="${originY + 4}"/>`;
+                            svg += `<text class="svg-axis-tick-label" style="font-size: ${baseFontSize}px" x="${px}" y="${originY + 18}" text-anchor="middle">${x.toFixed(1)}</text>`;
+                        }
+                    }
+                }
+                
+                const yTickSpacing = (y_max - y_min) / numTicks;
+                for (let i = 0; i <= numTicks; i++) {
+                    const y = y_min + i * yTickSpacing;
+                    if (Math.abs(y) > 0.01) {
+                        const py = mapY(y);
+                        if (py >= P && py <= height - P && showOriginX) {
+                            svg += `<line class="svg-axis" x1="${originX - 4}" y1="${py}" x2="${originX + 4}" y2="${py}"/>`;
+                            svg += `<text class="svg-axis-tick-label" style="font-size: ${baseFontSize}px" x="${originX - 8}" y="${py + 4}" text-anchor="end">${y.toFixed(1)}</text>`;
+                        }
+                    }
+                }
+                
+                // Eje de simetría
+                const axisX = mapX(vertex.x);
+                if (axisX >= P && axisX <= width - P) {
+                    svg += `<line class="svg-axis-symmetry" x1="${axisX}" y1="${P}" x2="${axisX}" y2="${height-P}"/>`;
+                    svg += `<text class="svg-axis-label" style="font-size: ${labelFontSize}px" x="${axisX + 6}" y="${P + 18}">x=${vertex.x.toFixed(2)}</text>`;
+                }
+                
+                // Curva de la parábola con mayor grosor para mejor visibilidad
+                if (plot_points.length > 0) {
+                    svg += `<path class="svg-curve" style="stroke-width: ${3 * zoom}" d="${plot_points.map((p, i) => {
+                        const px = mapX(p.x);
+                        const py = mapY(p.y);
+                        return `${i === 0 ? 'M' : 'L'} ${px} ${py}`;
+                    }).join(' ')}"/>`;
+                }
+                
+                // Raíces reales con tamaño adaptativo
+                const pointRadius = Math.max(5, Math.min(8, 6 * zoom));
+                roots.forEach((r, i) => {
+                    const rx = mapX(r);
+                    if (rx >= P && rx <= width - P && showOriginY) {
+                        svg += `<circle class="svg-point svg-root" cx="${rx}" cy="${originY}" r="${pointRadius}"/>`;
+                        const yOffset = i % 2 === 0 ? 22 : -14;
+                        const rootLabel = i === 0 ? 'x₁' : 'x₂';
+                        svg += `<text class="svg-label svg-root-label" style="font-size: ${labelFontSize}px; font-weight: 600;" x="${rx}" y="${originY + yOffset}" text-anchor="middle">${rootLabel}</text>`;
+                    }
+                });
+                
+                // Vértice con mejor contraste
+                const vx = mapX(vertex.x), vy = mapY(vertex.y);
+                if (vx >= P - 10 && vx <= width - P + 10 && vy >= P - 10 && vy <= height - P + 10) {
+                    svg += `<circle class="svg-point svg-vertex" cx="${vx}" cy="${vy}" r="${pointRadius}"/>`;
+                    const vLabelY = a > 0 ? vy + 24 : vy - 16;
+                    svg += `<text class="svg-label svg-vertex-label" style="font-size: ${labelFontSize}px; font-weight: 700;" x="${vx}" y="${vLabelY}" text-anchor="middle">V</text>`;
+                }
+                
+                // Ordenada al origen
+                const yIntX = mapX(0), yIntY = mapY(y_intercept);
+                if (yIntY >= P && yIntY <= height - P && showOriginX) {
+                    svg += `<circle class="svg-point svg-y-intercept" cx="${yIntX}" cy="${yIntY}" r="${pointRadius}"/>`;
+                    const labelOffset = vertex.x > 0 ? -12 : 12;
+                    const anchor = vertex.x > 0 ? 'end' : 'start';
+                    svg += `<text class="svg-label svg-y-intercept-label" style="font-size: ${labelFontSize}px; font-weight: 600;" x="${yIntX + labelOffset}" y="${yIntY + 5}" text-anchor="${anchor}">c</text>`;
+                }
+                
+                svg += `</svg>`;
+                container.innerHTML = svg;
+                
+                // Agregar event listeners para pan después de renderizar
+                setupPanListeners();
+            }
+
+            function updateUI() {
+                try {
+                    if (Math.abs(state.a) < EPSILON) {
+                        DOM.errorMessageA.style.display = 'block';
+                        if (DOM.mainGraphContainer) {
+                            DOM.mainGraphContainer.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-color);">Configure el coeficiente <strong>a</strong> diferente de cero para ver la parábola.</div>';
+                        }
+                        DOM.keyResultsContainer.style.visibility = 'hidden';
+                        return;
+                    }
+                    DOM.errorMessageA.style.display = 'none';
+                    DOM.keyResultsContainer.style.visibility = 'visible';
+                    
+                    state.solution = solveQuadratic(state.a, state.b, state.c);
+                    updateGraphAndValues();
+                    updateMathJax();
+                } catch (error) {
+                    console.error('Error al actualizar UI:', error);
+                    if (DOM.mainGraphContainer) {
+                        DOM.mainGraphContainer.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--error-color);">Error al generar el gráfico. Intente con valores diferentes.</div>';
+                    }
+                }
+            }
+
+            // Actualización rápida: solo gráfico SVG y valores numéricos (sin MathJax)
+            function updateGraphAndValues() {
+                try {
+                    // Renderizar gráfico SVG (operación rápida)
+                    if (DOM.mainGraphContainer) {
+                        renderGraph(DOM.mainGraphContainer);
+                    }
+                    
+                    // Actualizar valores numéricos básicos (sin LaTeX)
+                    const { discriminant, vertex, y_intercept } = state.solution;
+                    if (DOM.discriminantDisplay) {
+                        DOM.discriminantDisplay.querySelector('.property-value').textContent = discriminant.toFixed(2);
+                    }
+                    if (DOM.vertexDisplay) {
+                        DOM.vertexDisplay.querySelector('.property-value').textContent = `(${vertex.x.toFixed(2)}, ${vertex.y.toFixed(2)})`;
+                    }
+                    if (DOM.yInterceptDisplay) {
+                        DOM.yInterceptDisplay.querySelector('.property-value').textContent = y_intercept.toFixed(2);
+                    }
+                } catch (error) {
+                    console.warn('Error en updateGraphAndValues:', error);
+                }
+            }
+
+            // Actualización pesada: MathJax, ecuaciones LaTeX, formas (con debounce)
+            function updateMathJax() {
+                try {
+                    renderEquation();
+                    renderResults();
+                    renderDynamicProperties();
+                    
+                    // Actualizar formas de función en la pestaña "forms"
+                    renderFunctionForms();
+                    
+                    // Actualizar proceso de completar cuadrados en la pestaña "completing"
+                    renderCompletingSquareProcess();
+                    
+                    // MathJax para renderizado de todas las ecuaciones
+                    if (window.MathJax?.typesetPromise) {
+                        const elementsToTypeset = [
+                            DOM.currentEquation,
+                            document.getElementById('dynamicProperties'),
+                            document.getElementById('key-results-container'),
+                            document.getElementById('completingSquareProcess')
+                        ].filter(el => el); // Filtrar elementos que existen
+                        
+                        MathJax.typesetPromise(elementsToTypeset).catch(err => console.warn('MathJax error:', err));
+                        
+                        // Anunciar cambio para lectores de pantalla
+                        const equation = DOM.currentEquation.textContent.replace(/\\[|\\]|f\(x\)\s*=/g, '').trim();
+                        announceChange(`Función actualizada: ${equation}`);
+                    }
+                } catch (error) {
+                    console.warn('Error en updateMathJax:', error);
+                }
+            }
+
+            function handleSliderInput(coeff, value) {
+                state[coeff] = value;
+                DOM.valueSpans[coeff].textContent = value.toFixed(1);
+                
+                // Actualizar atributos ARIA para accesibilidad
+                DOM.sliders[coeff].setAttribute('aria-valuenow', value.toFixed(1));
+                
+                // Recalcular solución inmediatamente
+                if (Math.abs(state.a) >= EPSILON) {
+                    state.solution = solveQuadratic(state.a, state.b, state.c);
+                }
+                
+                // DOUBLE-DEBOUNCE SYSTEM para optimización de performance:
+                // 1. Gráfico SVG: actualización inmediata en cada frame (60fps)
+                if (debounceTimer?.frameId) {
+                    cancelAnimationFrame(debounceTimer.frameId);
+                }
+                debounceTimer = { frameId: requestAnimationFrame(updateGraphAndValues) };
+                
+                // 2. MathJax y ecuaciones: actualización con debounce (150ms) para operaciones pesadas
+                clearTimeout(mathTimeout);
+                mathTimeout = setTimeout(() => {
+                    updateMathJax();
+                }, 150); // Espera a que el usuario termine de ajustar el slider
+            }
+
+            function showTab(tabName) {
+                DOM.tabContents.forEach(el => el.classList.remove('active'));
+                DOM.tabButtons.forEach(el => el.classList.remove('active'));
+                document.getElementById(tabName).classList.add('active');
+                document.querySelector(`.tab-button[data-tab="${tabName}"]`).classList.add('active');
+            }
+
+            // Configurar listeners para pan (arrastre del gráfico)
+            function setupPanListeners() {
+                const svg = document.getElementById('mainSvg');
+                if (!svg) return;
+                
+                // Pan deshabilitado - los ejes permanecen fijos
+                // Solo mantenemos el zoom con rueda del mouse
+                
+                // Soporte para rueda del mouse (zoom)
+                svg.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    
+                    if (e.deltaY < 0) {
+                        graphState.zoom *= 1.1;
+                        graphState.zoom = Math.min(graphState.zoom, 20);
+                    } else {
+                        graphState.zoom /= 1.1;
+                        graphState.zoom = Math.max(graphState.zoom, 0.1);
+                    }
+                    
+                    updateUI();
+                }, { passive: false });
+            }
+
+            function initialize() {
+                // Event listeners para sliders
+                Object.keys(DOM.sliders).forEach(coeff => {
+                    const slider = DOM.sliders[coeff];
+                    
+                    // Input event para actualización en tiempo real
+                    slider.addEventListener('input', (e) => {
+                        handleSliderInput(coeff, parseFloat(e.target.value));
+                    });
+                    
+                    // Change event como respaldo
+                    slider.addEventListener('change', (e) => {
+                        handleSliderInput(coeff, parseFloat(e.target.value));
+                    });
+                });
+                
+                // Tabs
+                DOM.tabsContainer.addEventListener('click', (e) => {
+                    const button = e.target.closest('.tab-button');
+                    if (button) {
+                        showTab(button.dataset.tab);
+                    }
+                });
+                
+                // Controles de zoom
+                DOM.zoomInBtn.addEventListener('click', () => {
+                    graphState.zoom *= 1.3;
+                    graphState.zoom = Math.min(graphState.zoom, 20); // Limitar zoom máximo
+                    updateUI();
+                });
+                
+                DOM.zoomOutBtn.addEventListener('click', () => {
+                    graphState.zoom /= 1.3;
+                    graphState.zoom = Math.max(graphState.zoom, 0.1); // Limitar zoom mínimo
+                    updateUI();
+                });
+                
+                DOM.zoomResetBtn.addEventListener('click', () => {
+                    graphState.zoom = 1;
+                    graphState.panX = 0;
+                    graphState.panY = 0;
+                    updateUI();
+                });
+                
+                fillStaticContent();
+                updateUI();
+            }
+
+            function fillStaticContent() {
+                const createAccordionItem = (item) => `<div class="accordion-item"><button class="accordion-button" aria-expanded="false"><span>${item.title}</span><svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg></button><div class="accordion-content"><div class="content-inner">${item.content}</div></div></div>`;
+                const theoryData = [ 
+                    { title: '1. Forma Polinómica', content: `<p>La función cuadrática se expresa como \\( f(x) = ax^2 + bx + c \\), donde \\(a, b, c\\) son coeficientes reales y \\(a \\neq 0\\). Su gráfica es una parábola.</p><p><strong>¿Por qué \\(a \\neq 0\\)?</strong> Si \\(a = 0\\), la ecuación se reduce a \\(f(x) = bx + c\\), que es una función lineal (recta), no cuadrática.</p>` }, 
+                    { title: '2. El Discriminante', content: `<p>El discriminante, \\(\\Delta = b^2 - 4ac\\), determina la naturaleza de las raíces de la ecuación cuadrática \\(ax^2+bx+c=0\\) (con \\(a \\neq 0\\)):</p><ul><li><b>\\(\\Delta > 0\\)</b>: Dos raíces reales y distintas. La parábola interseca el eje X en dos puntos.</li><li><b>\\(\\Delta = 0\\)</b>: Una raíz real doble. La parábola toca el eje X en su vértice.</li><li><b>\\(\\Delta < 0\\)</b>: Dos raíces complejas conjugadas. La parábola no interseca el eje X.</li></ul><p><strong>Interpretación geométrica:</strong> El discriminante indica la relación entre la parábola y el eje X.</p><p><strong>Nota histórica:</strong> Aunque el concepto se usaba implícitamente desde la antigüedad, el término "discriminante" fue acuñado formalmente por <strong>James Joseph Sylvester</strong> en 1851, quien sistematizó su uso en la teoría de invariantes algebraicos.</p>`}, 
+                    { title: '3. Fórmula Resolvente (Bhaskara)', content: `<p>Las raíces (o ceros) de la ecuación cuadrática \\(ax^2+bx+c=0\\) (con \\(a \\neq 0\\)) se encuentran usando la fórmula general:</p><div class="math-display">\\[x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}\\]</div><p>Esta fórmula es válida para cualquier ecuación cuadrática y proporciona ambas raíces (reales o complejas) simultáneamente.</p>`}, 
+                    { title: '4. Vértice y Eje de Simetría', content: `<p>Para una función cuadrática \\(f(x) = ax^2+bx+c\\) con \\(a \\neq 0\\), el vértice es el punto mínimo (si \\(a>0\\)) o máximo (si \\(a<0\\)) de la parábola. Sus coordenadas son:</p><div class="math-display">\\[ V = \\left( -\\frac{b}{2a}, f\\left(-\\frac{b}{2a}\\right) \\right) \\]</div><p>La línea vertical \\(x = -b/2a\\) es el eje de simetría.</p><p><strong>Derivación alternativa:</strong> La coordenada y del vértice también puede calcularse como \\(y_v = c - \\frac{b^2}{4a} = -\\frac{\\Delta}{4a}\\), mostrando la conexión con el discriminante.</p>`}, 
+                    { title: '5. Ordenada al Origen', content: `<p>El término independiente <strong>c</strong> define la <strong>ordenada al origen</strong>. Ocurre al evaluar \\(f(0) = c\\). Gráficamente, es el punto de intersección con el eje Y: \\((0, c)\\).</p><p><strong>Propiedad útil:</strong> Si conoces las raíces \\(x_1\\) y \\(x_2\\), entonces \\(c = a \\cdot x_1 \\cdot x_2\\) (por las relaciones de Vieta).</p>`}, 
+                    { title: '6. Demostración de la Fórmula Resolvente', content: `<p>Se deduce completando el cuadrado a partir de la ecuación cuadrática \\(ax^2+bx+c=0\\) con \\(a \\neq 0\\):</p><ol><li>Partir de \\(ax^2+bx+c=0\\).</li><li>Dividir por \\(a\\) (válido porque \\(a \\neq 0\\)): \\(x^2 + \\frac{b}{a}x + \\frac{c}{a} = 0\\).</li><li>Restar \\(\\frac{c}{a}\\): \\(x^2 + \\frac{b}{a}x = -\\frac{c}{a}\\).</li><li>Completar el cuadrado sumando \\(\\left(\\frac{b}{2a}\\right)^2\\): \\(x^2 + \\frac{b}{a}x + \\frac{b^2}{4a^2} = \\frac{b^2}{4a^2} - \\frac{c}{a}\\).</li><li>Factorizar: \\(\\left(x + \\frac{b}{2a}\\right)^2 = \\frac{b^2 - 4ac}{4a^2}\\).</li><li>Aplicar raíz: \\(x + \\frac{b}{2a} = \\pm\\frac{\\sqrt{b^2-4ac}}{2a}\\).</li><li>Despejar \\(x\\): \\(x = \\frac{-b \\pm\\sqrt{b^2-4ac}}{2a}\\).</li></ol>`},
+                    { title: '7. Relaciones de Vieta', content: `<p>Para una ecuación cuadrática \\(ax^2 + bx + c = 0\\) (con \\(a \\neq 0\\)) con raíces \\(x_1\\) y \\(x_2\\):</p><div class="math-display">\\[x_1 + x_2 = -\\frac{b}{a}\\]</div><div class="math-display">\\[x_1 \\cdot x_2 = \\frac{c}{a}\\]</div><p><strong>Aplicación:</strong> Estas relaciones permiten verificar raíces sin necesidad de calcularlas explícitamente, y son útiles para factorizar polinomios.</p>`}
+                ];
+                document.getElementById('theory').innerHTML = `<div class="card"><h3>Fundamentos de la Función Cuadrática</h3>${theoryData.map(createAccordionItem).join('')}</div>`;
+                document.getElementById('history').innerHTML = `<div class="card"><h3>Desarrollo Histórico de la Ecuación Cuadrática</h3>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <p>El problema de resolver ecuaciones cuadráticas atraviesa la historia de las matemáticas desde la antigüedad hasta el período moderno. Su desarrollo ilustra la evolución del pensamiento matemático desde métodos algorítmicos específicos hacia la abstracción simbólica, y refleja las limitaciones conceptuales inherentes a cada período histórico.</p>
+                </div>
+                
+                <div class="accordion-item">
+                    <button class="accordion-button" aria-expanded="false">
+                        <span>Mesopotamia</span>
+                        <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="content-inner">
+                            <p>Las tablillas cuneiformes del período babilónico antiguo documentan procedimientos sistemáticos para resolver problemas que, en notación moderna, corresponden a ecuaciones de la forma \\(x^2 + px = q\\) y \\(x^2 = px + q\\). El método fundamental empleado es el de <em>completar el cuadrado</em>, aunque expresado en términos geométricos y procedimentales, no algebraicos.</p>
+                            <p><strong>Características técnicas:</strong></p>
+                            <ul>
+                                <li>Las tablillas YBC 6967 y BM 13901 contienen algoritmos explícitos que pueden expresarse modernamente como: para \\(x^2 + px = q\\), calcular \\(x = \\sqrt{(p/2)^2 + q} - p/2\\).</li>
+                                <li>Los babilonios manejaban el concepto de raíz cuadrada con precisión considerable, desarrollando aproximaciones iterativas registradas en tablas.</li>
+                                <li>Solo se consideraban soluciones positivas, coherente con la interpretación geométrica donde \\(x\\) representa longitudes.</li>
+                                <li><strong>Ausencia de notación simbólica:</strong> Los babilonios no utilizaban variables como \\(x\\) o \\(y\\). Planteaban problemas en términos concretos de "longitud y anchura" o áreas, resolviendo cada caso mediante algoritmos numéricos específicos sin abstracción algebraica general.</li>
+                            </ul>
+                            <p><strong>Limitación fundamental:</strong> La ausencia de abstracción algebraica impedía reconocer la estructura común subyacente a diferentes problemas.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <button class="accordion-button" aria-expanded="false">
+                        <span>Grecia Clásica</span>
+                        <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="content-inner">
+                            <p>Los matemáticos griegos reformularon los procedimientos algorítmicos mesopotámicos dentro de un marco axiomático-deductivo. <strong>Euclides</strong>, en <em>Elementos</em> (Libro II, proposiciones 5-6, y Libro VI, proposiciones 28-29), proporciona construcciones geométricas equivalentes a la resolución de ecuaciones cuadráticas, aunque sin emplear terminología algebraica.</p>
+                            <p><strong>Método geométrico:</strong></p>
+                            <ul>
+                                <li>La proposición II.5 resuelve geométricamente un problema equivalente a \\(x(a-x) = k^2\\), mediante construcción con regla y compás.</li>
+                                <li>La doctrina pitagórica de magnitudes inconmensurables condujo a una teoría de proporciones (Libro V) aplicable tanto a números racionales como irracionales.</li>
+                                <li><strong>Apolonio</strong> (c. 200 a.C.) en <em>Cónicas</em> estableció rigurosamente las propiedades de parábolas, elipses e hipérbolas como secciones de conos, proporcionando el fundamento geométrico para el posterior análisis algebraico de estas curvas.</li>
+                            </ul>
+                            <p><strong>Restricción conceptual:</strong> La geometría griega no admitía números negativos ni el cero como entidades matemáticas legítimas, limitando el alcance de las soluciones.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <button class="accordion-button" aria-expanded="false">
+                        <span>India</span>
+                        <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="content-inner">
+                            <p><strong>Brahmagupta</strong> (628 d.C.) en <em>Brahmasphutasiddhanta</em>, capítulo 18, proporciona la primera regla algebraica explícita para resolver ecuaciones cuadráticas: para \\(ax^2 + bx = c\\) (con \\(a \\neq 0\\)), obtenemos \\(x = \\frac{\\sqrt{b^2 + 4ac} - b}{2a}\\).</p>
+                            <p><strong>Avances conceptuales:</strong></p>
+                            <ul>
+                                <li>Reconocimiento explícito de <em>dos</em> raíces para cada ecuación cuadrática.</li>
+                                <li>Elaboración de reglas operativas para números negativos ("deudas"), aunque permanecía cierta ambigüedad sobre su estatus ontológico.</li>
+                                <li>El sistema numérico decimal posicional con cero como número operativo facilitó el desarrollo algebraico.</li>
+                                <li>Tratamiento de ecuaciones diofánticas cuadráticas (ecuación de Pell: \\(x^2 - Ny^2 = 1\\)), anticipando desarrollos posteriores en teoría de números.</li>
+                            </ul>
+                            <p><strong>Contribución de Bhaskara II</strong> (1150 d.C.): En <em>Bijaganita</em>, formula explícitamente \\(x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}\\) (con \\(a \\neq 0\\)), con notación del operador \\(\\pm\\) y justificación mediante completación algebraica del cuadrado. Representa la culminación del álgebra india clásica.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <button class="accordion-button" aria-expanded="false">
+                        <span>Mundo Islámico</span>
+                        <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="content-inner">
+                            <p><strong>Al-Khwarizmi</strong> (c. 820 d.C.) en <em>Al-Kitab al-Mukhtasar fi Hisab al-Jabr wal-Muqabala</em> (Compendio sobre Cálculo mediante Restauración y Balanceo) sistematizó la resolución de ecuaciones cuadráticas, estableciendo seis tipos canónicos (en todos los casos con \\(a \\neq 0\\) cuando aparece el término cuadrático):</p>
+                            <p style="margin-left: 1rem;">\\(ax^2 = bx\\), \\(ax^2 = c\\), \\(bx = c\\), \\(ax^2 + bx = c\\), \\(ax^2 + c = bx\\), \\(ax^2 = bx + c\\)</p>
+                            <p><strong>Limitación conceptual crítica:</strong> Al-Khwarizmi no manejaba números negativos como entidades matemáticas válidas (estos no existían formalmente en su sistema numérico). Por ello, cada configuración de signos requería un caso separado con su propio procedimiento geométrico de solución. Lo que modernamente escribimos como \\(ax^2 + bx + c = 0\\) con coeficientes positivos o negativos, él debía dividir en múltiples casos según qué términos aparecían en cada lado de la igualdad.</p>
+                            <p>Para cada tipo, proporcionó:</p>
+                            <ul>
+                                <li><strong>Algoritmos verbales de solución</strong> (sin notación simbólica alguna, describiendo operaciones paso a paso).</li>
+                                <li><strong>Demostraciones geométricas rigurosas</strong> mediante construcción de áreas y completamiento de cuadrados, sintetizando el rigor euclidiano con procedimientos algebraicos.</li>
+                                <li><strong>Aplicaciones prácticas extensas</strong> en herencias, comercio, agrimensura y astronomía.</li>
+                            </ul>
+                            <p><strong>Obra posterior:</strong> <strong>Omar Khayyam</strong> (c. 1070) extendió métodos geométricos a ecuaciones cúbicas mediante intersección de cónicas, anticipando conexiones algebraico-geométricas profundizadas en el Renacimiento.</p>
+                            <p><strong>Impacto en Europa:</strong> La traducción latina del siglo XII (<em>Liber Algebrae et Almucabola</em>, Robert de Chester, 1145) introdujo estos métodos en Europa medieval.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <button class="accordion-button" aria-expanded="false">
+                        <span>Europa Renacentista</span>
+                        <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="content-inner">
+                            <p>El Renacimiento europeo consolidó la transición desde el álgebra retórica y sincopada hacia el <strong>álgebra simbólica</strong>, transformando ecuaciones de recetas procedimentales a objetos matemáticos manipulables formalmente.</p>
+                            <p><strong>Desarrollo de la notación:</strong></p>
+                            <ul>
+                                <li><strong>François Vieta</strong> (1591, <em>In artem analyticem isagoge</em>): Innovó usando letras para cantidades conocidas y desconocidas, permitiendo expresar relaciones generales. Estableció las relaciones entre coeficientes y raíces de la ecuación \\(ax^2 + bx + c = 0\\) con \\(a \\neq 0\\): \\(x_1 + x_2 = -b/a\\), \\(x_1 x_2 = c/a\\).</li>
+                                <li><strong>René Descartes</strong> (1637, <em>La Géométrie</em>): Unificó álgebra y geometría mediante coordenadas, interpretando ecuaciones como curvas. La parábola pasó a entenderse como la representación gráfica de \\(y = ax^2 + bx + c\\) (con \\(a \\neq 0\\)), estableciendo la dualidad algebraico-geométrica fundamental del análisis moderno.</li>
+                                <li><strong>Cardano</strong> (1545) y <strong>Bombelli</strong> (1572) iniciaron el estudio sistemático de números complejos al resolver ecuaciones cúbicas, aunque su naturaleza permaneció oscura hasta el siglo XIX.</li>
+                            </ul>
+                            <p><strong>Consolidación moderna:</strong></p>
+                            <ul>
+                                <li><strong>Newton-Leibniz</strong> (siglo XVII): El cálculo diferencial proporcionó métodos analíticos para localizar extremos (vértices) de funciones mediante \\(f'(x) = 2ax + b = 0\\).</li>
+                                <li><strong>Euler, Lagrange, Gauss</strong> (siglos XVIII-XIX): Formalizaron la teoría general de polinomios. El <strong>Teorema Fundamental del Álgebra</strong> (demostrado rigurosamente por Gauss, 1799) garantiza que todo polinomio de grado \\(n\\) tiene exactamente \\(n\\) raíces complejas (contadas con multiplicidad).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+
+                
+                </div>`;
+                const examplesData = [ 
+                    { title: 'Ejemplo 1: Dos Raíces Reales (\\(\\Delta > 0\\))', content: `<p><b>Ecuación:</b> \\(x^2 - 2x - 3 = 0\\)</p><p><b>Coeficientes:</b> \\(a=1\\), \\(b=-2\\), \\(c=-3\\)</p><p><b>Análisis:</b></p><ul><li>Discriminante: \\(\\Delta = (-2)^2 - 4(1)(-3) = 4 + 12 = 16 > 0\\)</li><li>Como \\(\\Delta > 0\\), hay <strong>dos raíces reales distintas</strong></li><li>Raíces: \\(x_1 = \\frac{2-4}{2} = -1\\) y \\(x_2 = \\frac{2+4}{2} = 3\\)</li><li>Vértice: \\(V = (1, -4)\\) (es un mínimo porque \\(a>0\\))</li><li>La parábola interseca el eje X en los puntos \\((-1, 0)\\) y \\((3, 0)\\)</li></ul><p><em>💡 <strong>Pruébalo:</strong> En la pestaña "Principal", configura a=1, b=-2, c=-3</em></p>`}, 
+                    { title: 'Ejemplo 2: Una Raíz Doble (\\(\\Delta = 0\\))', content: `<p><b>Ecuación:</b> \\(x^2 - 4x + 4 = 0\\)</p><p><b>Coeficientes:</b> \\(a=1\\), \\(b=-4\\), \\(c=4\\)</p><p><b>Análisis:</b></p><ul><li>Discriminante: \\(\\Delta = (-4)^2 - 4(1)(4) = 16 - 16 = 0\\)</li><li>Como \\(\\Delta = 0\\), hay <strong>una raíz real doble</strong></li><li>Raíz: \\(x = \\frac{4}{2} = 2\\) (con multiplicidad 2)</li><li>Vértice: \\(V = (2, 0)\\) (la parábola toca el eje X en el vértice)</li><li>Forma factorizada: \\(f(x) = (x-2)^2\\)</li></ul><p><em>💡 <strong>Pruébalo:</strong> En la pestaña "Principal", configura a=1, b=-4, c=4</em></p>`}, 
+                    { title: 'Ejemplo 3: Raíces Complejas (\\(\\Delta < 0\\))', content: `<p><b>Ecuación:</b> \\(x^2 + 2x + 5 = 0\\)</p><p><b>Coeficientes:</b> \\(a=1\\), \\(b=2\\), \\(c=5\\)</p><p><b>Análisis:</b></p><ul><li>Discriminante: \\(\\Delta = (2)^2 - 4(1)(5) = 4 - 20 = -16 < 0\\)</li><li>Como \\(\\Delta < 0\\), hay <strong>dos raíces complejas conjugadas</strong></li><li>Raíces: \\(x = \\frac{-2 \\pm \\sqrt{-16}}{2} = \\frac{-2 \\pm 4i}{2} = -1 \\pm 2i\\)</li><li>Vértice: \\(V = (-1, 4)\\) (es un mínimo porque \\(a>0\\))</li><li>La parábola <strong>no interseca</strong> el eje X (queda completamente por encima)</li></ul><p><em>💡 <strong>Pruébalo:</strong> En la pestaña "Principal", configura a=1, b=2, c=5</em></p>`}
+                ];
+                document.getElementById('examples').innerHTML = `<div class="card"><h3>Ejemplos Resueltos</h3><p style="margin-bottom: 1.5rem;">Explora estos ejemplos paso a paso y luego pruébalos en la calculadora interactiva para visualizar cada caso.</p>${examplesData.map(createAccordionItem).join('')}</div>`;
+                
+                // Contenido de Formas de la Función
+                document.getElementById('forms').innerHTML = `<div class="card">
+                    <h3>Las Tres Formas de la Función Cuadrática</h3>
+                    <p style="margin-bottom: 1.5rem;">Una función cuadrática \\(f(x) = ax^2 + bx + c\\) (con \\(a \\neq 0\\)) puede expresarse de tres formas equivalentes, cada una revelando información específica de la parábola:</p>
+                    
+                    <div style="background-color: #fef3c7; border: 2px solid var(--warning-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem;">
+                        <h4 style="margin-top: 0; color: var(--heading-color);">🔢 Expresiones de la Función Actual</h4>
+                        <div id="currentForms" style="font-family: 'Fira Code', monospace; line-height: 2;">
+                            <div><strong>Polinómica:</strong> <span id="formPoly">f(x) = x² - 2x - 3</span></div>
+                            <div><strong>Factorizada:</strong> <span id="formFactor">f(x) = (x + 1)(x - 3)</span></div>
+                            <div><strong>Canónica:</strong> <span id="formCanon">f(x) = (x - 1)² - 4</span></div>
+                        </div>
+                        <p style="margin-top: 1rem; margin-bottom: 0; font-size: 0.9em; color: var(--text-color);">
+                            💡 <em>Estas expresiones se actualizan automáticamente cuando modificas los coeficientes en la pestaña "Principal".</em>
+                        </p>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <button class="accordion-button" aria-expanded="false">
+                            <span>📐 Forma Polinómica (Estándar)</span>
+                            <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="content-inner">
+                                <div class="math-display">\\[ f(x) = ax^2 + bx + c \\quad (a \\neq 0) \\]</div>
+                                <p><strong>¿Qué información brinda?</strong></p>
+                                <ul>
+                                    <li><strong>Ordenada al origen:</strong> El coeficiente \\(c\\) indica directamente dónde la parábola interseca el eje Y en el punto \\((0, c)\\)</li>
+                                    <li><strong>Concavidad:</strong> Si \\(a > 0\\), la parábola abre hacia arriba; si \\(a < 0\\), hacia abajo</li>
+                                    <li><strong>Facilidad para derivar:</strong> Es la forma más simple para calcular derivadas</li>
+                                </ul>
+                                <p><strong>Ejemplo:</strong> \\(f(x) = x^2 - 2x - 3\\)</p>
+                                <p>Aquí \\(a = 1\\), \\(b = -2\\), \\(c = -3\\)</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <button class="accordion-button" aria-expanded="false">
+                            <span>🔢 Forma Factorizada</span>
+                            <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="content-inner">
+                                <div class="math-display">\\[ f(x) = a(x - x_1)(x - x_2) \\quad (a \\neq 0) \\]</div>
+                                <p><strong>¿Qué información brinda?</strong></p>
+                                <ul>
+                                    <li><strong>Raíces inmediatas:</strong> Los valores \\(x_1\\) y \\(x_2\\) son las raíces (ceros) de la función</li>
+                                    <li><strong>Intersecciones con el eje X:</strong> La parábola interseca el eje X en \\((x_1, 0)\\) y \\((x_2, 0)\\)</li>
+                                    <li><strong>Simetría:</strong> El eje de simetría está en \\(x = \\frac{x_1 + x_2}{2}\\)</li>
+                                </ul>
+                                <p><strong>¡Importante!</strong> Esta forma <strong>solo existe cuando el discriminante \\(\\Delta \\geq 0\\)</strong>, es decir, cuando hay raíces reales.</p>
+                                <p><strong>Ejemplo:</strong> \\(f(x) = (x + 1)(x - 3) = x^2 - 2x - 3\\)</p>
+                                <p>Raíces: \\(x_1 = -1\\), \\(x_2 = 3\\)</p>
+                                
+                                <div style="margin-top: 1rem; padding: 1rem; background-color: #ebf8ff; border-left: 4px solid var(--accent-color); border-radius: 8px;">
+                                    <strong>🔄 Conversión de Polinómica a Factorizada:</strong><br>
+                                    1. Calcular raíces con la fórmula resolvente: \\(x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}\\) (con \\(a \\neq 0\\))<br>
+                                    2. Expresar como: \\(f(x) = a(x - x_1)(x - x_2)\\)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <button class="accordion-button" aria-expanded="false">
+                            <span>⭐ Forma Canónica (Vértice)</span>
+                            <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="content-inner">
+                                <div class="math-display">\\[ f(x) = a(x - h)^2 + k \\quad (a \\neq 0) \\]</div>
+                                <p><strong>¿Qué información brinda?</strong></p>
+                                <ul>
+                                    <li><strong>Vértice inmediato:</strong> El punto \\((h, k)\\) es el vértice de la parábola</li>
+                                    <li><strong>Valor extremo:</strong> \\(k\\) es el valor máximo (si \\(a < 0\\)) o mínimo (si \\(a > 0\\)) de la función</li>
+                                    <li><strong>Eje de simetría:</strong> La recta \\(x = h\\)</li>
+                                    <li><strong>Transformaciones:</strong> Facilita visualizar traslaciones horizontales y verticales</li>
+                                </ul>
+                                <p><strong>Ejemplo:</strong> \\(f(x) = (x - 1)^2 - 4 = x^2 - 2x - 3\\)</p>
+                                <p>Vértice: \\(V = (1, -4)\\)</p>
+                                
+                                <div style="margin-top: 1rem; padding: 1rem; background-color: #f0fff4; border-left: 4px solid var(--success-color); border-radius: 8px;">
+                                    <strong>🔄 Conversión de Polinómica a Canónica (Completar el cuadrado):</strong><br>
+                                    1. Factor común de \\(a\\) (con \\(a \\neq 0\\)): \\(f(x) = a(x^2 + \\frac{b}{a}x) + c\\)<br>
+                                    2. Completar el cuadrado: \\(f(x) = a\\left[(x + \\frac{b}{2a})^2 - \\frac{b^2}{4a^2}\\right] + c\\)<br>
+                                    3. Simplificar: \\(f(x) = a(x + \\frac{b}{2a})^2 + c - \\frac{b^2}{4a}\\)<br>
+                                    4. Identificar: \\(h = -\\frac{b}{2a}\\), \\(k = c - \\frac{b^2}{4a}\\)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 2rem; padding: 1.5rem; background-color: #fef3c7; border: 2px solid var(--warning-color); border-radius: 12px;">
+                        <h4 style="margin-top: 0; color: var(--heading-color);">📊 Tabla Comparativa</h4>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+                            <thead>
+                                <tr style="background-color: var(--bg-color);">
+                                    <th style="padding: 0.75rem; text-align: left; border: 1px solid var(--border-color);">Forma</th>
+                                    <th style="padding: 0.75rem; text-align: left; border: 1px solid var(--border-color);">Expresión</th>
+                                    <th style="padding: 0.75rem; text-align: left; border: 1px solid var(--border-color);">Información Principal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding: 0.75rem; border: 1px solid var(--border-color);"><strong>Polinómica</strong></td>
+                                    <td style="padding: 0.75rem; border: 1px solid var(--border-color);">\\(ax^2 + bx + c\\)</td>
+                                    <td style="padding: 0.75rem; border: 1px solid var(--border-color);">Ordenada al origen \\((0, c)\\)</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0.75rem; border: 1px solid var(--border-color);"><strong>Factorizada</strong></td>
+                                    <td style="padding: 0.75rem; border: 1px solid var(--border-color);">\\(a(x - x_1)(x - x_2)\\)</td>
+                                    <td style="padding: 0.75rem; border: 1px solid var(--border-color);">Raíces \\(x_1, x_2\\)</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0.75rem; border: 1px solid var(--border-color);"><strong>Canónica</strong></td>
+                                    <td style="padding: 0.75rem; border: 1px solid var(--border-color);">\\(a(x - h)^2 + k\\)</td>
+                                    <td style="padding: 0.75rem; border: 1px solid var(--border-color);">Vértice \\((h, k)\\)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem; padding: 1rem; background-color: #ebf8ff; border-left: 4px solid var(--accent-color); border-radius: 8px;">
+                        <strong>💡 Consejo Didáctico:</strong> Practica convirtiendo la función actual entre las diferentes formas usando los controles en la pestaña "Principal". Observa cómo cada forma revela aspectos distintos de la misma parábola.
+                    </div>
+                </div>`;
+                
+                // Contenido de Completar Cuadrados
+                document.getElementById('completing').innerHTML = `<div class="card">
+                    <h3>Método de Completar Cuadrados</h3>
+                    <p style="margin-bottom: 1.5rem;">El método de <strong>completar el cuadrado</strong> es una técnica algebraica fundamental que permite transformar una función cuadrática de su forma polinómica estándar \\(f(x) = ax^2 + bx + c\\) (con \\(a \\neq 0\\)) a su forma canónica \\(f(x) = a(x - h)^2 + k\\). Este método revela directamente el vértice de la parábola y es la base histórica de la fórmula resolvente.</p>
+                    
+                    <!-- Contenedor para el proceso dinámico con valores actuales -->
+                    <div id="completingSquareProcess"></div>
+                    
+                    <div class="accordion-item">
+                        <button class="accordion-button" aria-expanded="false">
+                            <span>📐 Fundamento Geométrico</span>
+                            <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="content-inner">
+                                <p>El nombre "completar el cuadrado" proviene de su interpretación geométrica original, desarrollada por matemáticos babilónicos y árabes. La idea es transformar un rectángulo en un cuadrado perfecto añadiendo un área adicional.</p>
+                                <p><strong>Visualización:</strong> Para la expresión \\(x^2 + bx\\), podemos imaginar:</p>
+                                <ul>
+                                    <li>Un cuadrado de área \\(x^2\\)</li>
+                                    <li>Un rectángulo de área \\(bx\\) adosado al cuadrado</li>
+                                    <li>Para "completar" un cuadrado mayor, necesitamos añadir un área de \\((\\frac{b}{2})^2\\)</li>
+                                </ul>
+                                <p>Así: \\(x^2 + bx + (\\frac{b}{2})^2 = (x + \\frac{b}{2})^2\\)</p>
+                                <p><strong>Ejemplo visual:</strong> Para \\(x^2 + 6x\\), completamos con \\((\\frac{6}{2})^2 = 9\\), obteniendo \\(x^2 + 6x + 9 = (x + 3)^2\\)</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <button class="accordion-button" aria-expanded="false">
+                            <span>🔨 Procedimiento Paso a Paso</span>
+                            <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="content-inner">
+                                <p>Para transformar \\(f(x) = ax^2 + bx + c\\) (con \\(a \\neq 0\\)) en forma canónica, seguimos estos pasos:</p>
+                                
+                                <div style="background-color: #f0fff4; border-left: 4px solid var(--success-color); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0;">
+                                    <h4 style="margin-top: 0; color: var(--heading-color);">Pasos del Método</h4>
+                                    
+                                    <p><strong>Paso 1: Factorizar el coeficiente principal</strong></p>
+                                    <p>Extraer \\(a\\) de los términos cuadráticos y lineales:</p>
+                                    <div class="math-display">\\[ f(x) = a\\left(x^2 + \\frac{b}{a}x\\right) + c \\]</div>
+                                    
+                                    <p><strong>Paso 2: Identificar el término a completar</strong></p>
+                                    <p>Dentro del paréntesis, el término que completa el cuadrado es:</p>
+                                    <div class="math-display">\\[ \\left(\\frac{b}{2a}\\right)^2 = \\frac{b^2}{4a^2} \\]</div>
+                                    
+                                    <p><strong>Paso 3: Sumar y restar el término</strong></p>
+                                    <p>Para mantener la igualdad, sumamos y restamos simultáneamente:</p>
+                                    <div class="math-display">\\[ f(x) = a\\left[x^2 + \\frac{b}{a}x + \\frac{b^2}{4a^2} - \\frac{b^2}{4a^2}\\right] + c \\]</div>
+                                    
+                                    <p><strong>Paso 4: Factorizar el trinomio cuadrado perfecto</strong></p>
+                                    <p>Los primeros tres términos forman un cuadrado perfecto:</p>
+                                    <div class="math-display">\\[ f(x) = a\\left[\\left(x + \\frac{b}{2a}\\right)^2 - \\frac{b^2}{4a^2}\\right] + c \\]</div>
+                                    
+                                    <p><strong>Paso 5: Distribuir y simplificar</strong></p>
+                                    <div class="math-display">\\[ f(x) = a\\left(x + \\frac{b}{2a}\\right)^2 - a\\cdot\\frac{b^2}{4a^2} + c \\]</div>
+                                    <div class="math-display">\\[ f(x) = a\\left(x + \\frac{b}{2a}\\right)^2 + c - \\frac{b^2}{4a} \\]</div>
+                                    
+                                    <p><strong>Paso 6: Forma canónica final</strong></p>
+                                    <div class="math-display">\\[ f(x) = a(x - h)^2 + k \\]</div>
+                                    <p>donde:</p>
+                                    <ul>
+                                        <li>\\( h = -\\frac{b}{2a} \\) (coordenada x del vértice)</li>
+                                        <li>\\( k = c - \\frac{b^2}{4a} = \\frac{4ac - b^2}{4a} = -\\frac{\\Delta}{4a} \\) (coordenada y del vértice)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <button class="accordion-button" aria-expanded="false">
+                            <span>📝 Ejemplo Completo: \\(f(x) = 2x^2 - 8x + 5\\)</span>
+                            <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="content-inner">
+                                <p><strong>Datos:</strong> \\(a = 2\\), \\(b = -8\\), \\(c = 5\\)</p>
+                                
+                                <div style="line-height: 2.2; margin: 1.5rem 0;">
+                                    <p><strong>Paso 1:</strong> Factorizar \\(a = 2\\)</p>
+                                    <div class="math-display">\\[ f(x) = 2\\left(x^2 - 4x\\right) + 5 \\]</div>
+                                    
+                                    <p><strong>Paso 2:</strong> Identificar el término completador</p>
+                                    <p>Coeficiente de \\(x\\) dentro del paréntesis: \\(-4\\)</p>
+                                    <p>Término a completar: \\(\\left(\\frac{-4}{2}\\right)^2 = (-2)^2 = 4\\)</p>
+                                    
+                                    <p><strong>Paso 3:</strong> Sumar y restar 4 dentro del paréntesis</p>
+                                    <div class="math-display">\\[ f(x) = 2\\left(x^2 - 4x + 4 - 4\\right) + 5 \\]</div>
+                                    
+                                    <p><strong>Paso 4:</strong> Factorizar el trinomio cuadrado perfecto</p>
+                                    <div class="math-display">\\[ f(x) = 2\\left[(x - 2)^2 - 4\\right] + 5 \\]</div>
+                                    
+                                    <p><strong>Paso 5:</strong> Distribuir el 2</p>
+                                    <div class="math-display">\\[ f(x) = 2(x - 2)^2 - 8 + 5 \\]</div>
+                                    
+                                    <p><strong>Paso 6:</strong> Simplificar</p>
+                                    <div class="math-display">\\[ f(x) = 2(x - 2)^2 - 3 \\]</div>
+                                </div>
+                                
+                                <div style="background-color: #ebf8ff; border: 2px solid var(--accent-color); border-radius: 8px; padding: 1rem; margin-top: 1.5rem;">
+                                    <strong>✅ Resultado:</strong> La forma canónica es \\(f(x) = 2(x - 2)^2 - 3\\)
+                                    <br><strong>Vértice:</strong> \\(V = (2, -3)\\)
+                                    <br><strong>Interpretación:</strong> La parábola tiene un mínimo en \\((2, -3)\\) porque \\(a = 2 > 0\\)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <button class="accordion-button" aria-expanded="false">
+                            <span>🎯 Aplicaciones del Método</span>
+                            <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="content-inner">
+                                <p>El método de completar el cuadrado tiene múltiples aplicaciones en matemáticas:</p>
+                                
+                                <h4 style="color: var(--heading-color); margin-top: 1.5rem;">1. Resolver ecuaciones cuadráticas</h4>
+                                <p>Para resolver \\(ax^2 + bx + c = 0\\) (con \\(a \\neq 0\\)):</p>
+                                <ul>
+                                    <li>Completar el cuadrado: \\(a(x - h)^2 + k = 0\\)</li>
+                                    <li>Despejar: \\((x - h)^2 = -\\frac{k}{a}\\)</li>
+                                    <li>Raíces: \\(x = h \\pm \\sqrt{-\\frac{k}{a}}\\)</li>
+                                </ul>
+                                <p>Esta técnica conduce directamente a la fórmula resolvente.</p>
+                                
+                                <h4 style="color: var(--heading-color); margin-top: 1.5rem;">2. Encontrar vértices</h4>
+                                <p>La forma canónica \\(f(x) = a(x - h)^2 + k\\) (con \\(a \\neq 0\\)) revela inmediatamente el vértice \\((h, k)\\), punto fundamental para graficar parábolas.</p>
+                                
+                                <h4 style="color: var(--heading-color); margin-top: 1.5rem;">3. Problemas de optimización</h4>
+                                <p>En problemas de máximos y mínimos, completar el cuadrado permite identificar valores extremos sin usar cálculo diferencial.</p>
+                                
+                                <h4 style="color: var(--heading-color); margin-top: 1.5rem;">4. Geometría analítica</h4>
+                                <p>Se usa para transformar la ecuación general de una cónica (circunferencia, elipse, hipérbola) a su forma canónica, revelando su centro y propiedades geométricas.</p>
+                                
+                                <div style="margin-top: 1.5rem; padding: 1rem; background-color: #fef3c7; border-left: 4px solid var(--warning-color); border-radius: 8px;">
+                                    <strong>🏛️ Nota Histórica:</strong> Este método fue utilizado por matemáticos babilónicos hace 4000 años (aunque de forma geométrica) y refinado por matemáticos islámicos como Al-Khwarizmi en el siglo IX, quien lo formalizó algebraicamente en su tratado fundacional del álgebra.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>`;
+                
+                document.querySelectorAll('.accordion-button').forEach(button => { button.addEventListener('click', () => { const content = button.nextElementSibling; const isExpanded = button.getAttribute('aria-expanded') === 'true'; button.setAttribute('aria-expanded', String(!isExpanded)); content.style.maxHeight = !isExpanded ? content.scrollHeight + 'px' : '0px'; }); });
+            }
+            
+            return { init: initialize };
+        })();
+
+        document.addEventListener('DOMContentLoaded', ParabolaExplorer.init);
+    </script>
+</body>
+</html>
